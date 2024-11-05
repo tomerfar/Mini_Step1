@@ -41,9 +41,6 @@ class Game:
         }
         self.time_limit = time_limit
 
-    def set_time_limit(self, time_limit):
-        self.time_limit = time_limit
-
     def run_game(self, verbose=True):
         if verbose:
             print('%s goes first' % self.first_player)
@@ -82,6 +79,10 @@ class Game:
 
             move_made = threading.Event()  # Add this line
 
+            # Pass the stop event to the strategy
+            stop_input_event = threading.Event()
+            self.strategies[colour].stop_input_event = stop_input_event
+
             def make_move():
                 self.strategies[colour].move(
                     ReadOnlyBoard(self.board),
@@ -97,6 +98,7 @@ class Game:
             move_thread.join(self.time_limit if self.time_limit > 0 else None)  # Modify this line
 
             if self.time_limit > 0 and not move_made.is_set():  # Modify this line
+                stop_input_event.set()  # Stop input in strategies.py
                 self.board.time_winner = colour.other()
                 if verbose:
                     print('%s did not make a move in time. %s wins!' % (colour, colour.other()))
@@ -104,32 +106,7 @@ class Game:
                     'dice_roll': full_dice_roll,
                     'opponents_move': moves
                 })
-                return  
-            if verbose and len(dice_roll) > 0:
-                print('FYI not all moves were made. %s playing %s did not move %s' % (
-                    colour,
-                    self.strategies[colour].__class__.__name__,
-                    dice_roll))
-                self.board.print_board()
-                state = {
-                    'board': json.loads(board_snapshot),
-                    'dice_roll': dice_roll_snapshot,
-                    'colour_to_move': colour.__str__(),
-                    'strategy': self.strategies[colour].__class__.__name__,
-                }
-                print(json.dumps(state))
-
-            if verbose:
-                self.board.print_board()
-            i = i + 1
-            if self.board.has_game_ended():
-                if verbose:
-                    print('%s has won!' % self.board.who_won())
-                self.strategies[colour.other()].game_over({
-                    'dice_roll': full_dice_roll,
-                    'opponents_move': moves
-                })
-                break
+                return
 
     def get_rolls_to_move(self, location, requested_move, available_rolls):
         # This first check ensures we return doing as little work as possible when the requested

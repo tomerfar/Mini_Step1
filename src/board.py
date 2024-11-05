@@ -9,7 +9,7 @@ from src.piece import Piece
 class Board:
     def __init__(self):
         self.__pieces = []
-        self.time_winner = None  # Add this line
+        self.time_winner = None  
 
     @classmethod
     def create_starting_board(cls):
