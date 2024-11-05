@@ -23,6 +23,17 @@ def print_tournament_branch(tournament_branch):
 def run_tournament(player_names):
     players = {name: HumanStrategy(name) for name in player_names}
     print_tournament_placement(player_names)
+    
+    time_limit = input("Enter time limit in seconds (or 'inf' for no limit): ")
+    if time_limit.lower() == 'inf':
+        time_limit = -1
+    else:
+        time_limit = int(time_limit)
+    
+    best_of = int(input("Enter the number of games for best of series (must be an odd number): "))
+    if best_of % 2 == 0:
+        raise ValueError("The number of games must be an odd number.")
+    
     game_results = []
     tournament_branch = []
     while len(players) > 1:
@@ -40,18 +51,28 @@ def run_tournament(player_names):
             print(f"Starting game: {player1} vs {player2}")  
             colour1 = Colour(randint(0, 1))
             colour2 = colour1.other()
-            first_player = Colour(randint(0, 1))
-            game = Game(
-                white_strategy=players[player1] if colour1 == Colour.WHITE else players[player2],
-                black_strategy=players[player1] if colour1 == Colour.BLACK else players[player2],
-                first_player=first_player
-            )
-            game.run_game(verbose=False)
-            winner = game.who_won()
-            winner_name = player1 if winner == colour1 else player2
-            next_round_players[winner_name] = players[winner_name]
-            game_results.append(f"{player1} vs {player2}: {winner_name} won")
-            print(f"{winner_name} won the match!")
+            first_player = colour1
+
+            wins = {player1: 0, player2: 0}
+            for game_number in range(1, best_of + 1):
+                current_first_player = first_player if game_number % 2 != 0 else first_player.other()
+                game = Game(
+                    white_strategy=players[player1] if colour1 == Colour.WHITE else players[player2],
+                    black_strategy=players[player1] if colour1 == Colour.BLACK else players[player2],
+                    first_player=current_first_player,
+                    time_limit=time_limit
+                )
+                game.run_game(verbose=False)
+                winner = game.who_won()
+                winner_name = player1 if winner == colour1 else player2
+                wins[winner_name] += 1
+                if wins[winner_name] > best_of // 2:
+                    break
+
+            series_winner = player1 if wins[player1] > wins[player2] else player2
+            next_round_players[series_winner] = players[series_winner]
+            game_results.append(f"{player1} vs {player2}: {series_winner} won the series")
+            print(f"{series_winner} won the series!")
         tournament_branch.append(round_matchups)
         players = next_round_players
     final_winner = list(players.keys())[0]
@@ -62,6 +83,15 @@ def run_tournament(player_names):
     print_tournament_branch(tournament_branch)
 
 if __name__ == '__main__':
-    num_players = int(input("Enter the number of players: "))
+    while True:
+        try:
+            num_players = int(input("Enter the number of players: "))
+            if num_players > 0:
+                break
+            else:
+                print("The number of players must be greater than 0.")
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+    
     player_names = [input(f"Name of player {i + 1}: ") for i in range(num_players)]
     run_tournament(player_names)

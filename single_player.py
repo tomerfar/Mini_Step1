@@ -17,10 +17,17 @@ if __name__ == '__main__':
 
     chosen_strategy = StrategyFactory.create_by_name(strategies[strategy_index].__name__)
 
+    time_limit = input("Enter time limit in seconds (or 'inf' for no limit): ")
+    if time_limit.lower() == 'inf':
+        time_limit = -1
+    else:
+        time_limit = int(time_limit)
+
     game = Game(
         white_strategy=HumanStrategy(name),
         black_strategy=chosen_strategy,
-        first_player=Colour(randint(0, 1))
+        first_player=Colour(randint(0, 1)),
+        time_limit=time_limit
     )
 
     game.run_game(verbose=False)

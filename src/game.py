@@ -1,6 +1,6 @@
 import json
 from random import randint
-import threading  # Add this import
+import threading
 
 from src.board import Board
 from src.colour import Colour
@@ -32,14 +32,17 @@ class ReadOnlyBoard:
 
 
 class Game:
-    def __init__(self, white_strategy: Strategy, black_strategy: Strategy, first_player: Colour, time_limit=30):
+    def __init__(self, white_strategy: Strategy, black_strategy: Strategy, first_player: Colour, time_limit=5):
         self.board = Board.create_starting_board()
         self.first_player = first_player
         self.strategies = {
             Colour.WHITE: white_strategy,
             Colour.BLACK: black_strategy
         }
-        self.time_limit = 5  # Update this line
+        self.time_limit = time_limit
+
+    def set_time_limit(self, time_limit):
+        self.time_limit = time_limit
 
     def run_game(self, verbose=True):
         if verbose:
@@ -91,9 +94,9 @@ class Game:
 
             move_thread = threading.Thread(target=make_move)  # Add this line
             move_thread.start()  # Add this line
-            move_thread.join(self.time_limit)  # Add this line
+            move_thread.join(self.time_limit if self.time_limit > 0 else None)  # Modify this line
 
-            if not move_made.is_set():  # Add this block
+            if self.time_limit > 0 and not move_made.is_set():  # Modify this line
                 self.board.time_winner = colour.other()
                 if verbose:
                     print('%s did not make a move in time. %s wins!' % (colour, colour.other()))
