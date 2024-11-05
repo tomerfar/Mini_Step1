@@ -154,6 +154,22 @@ class Board:
                 data[location] = {'colour': pieces[0].colour.__str__(), 'count': len(pieces)}
         return json.dumps(data)
 
+    def export_state(self):
+        state = [0] * 27
+        for location in range(26):
+            pieces = self.pieces_at(location)
+            if len(pieces) > 0:
+                state[location] = len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)
+        return state
+
+    def import_state(self, state):
+        self.__pieces = []
+        for location, count in enumerate(state):
+            if count > 0:
+                self.add_many_pieces(count, Colour.WHITE, location)
+            elif count < 0:
+                self.add_many_pieces(-count, Colour.BLACK, location)
+
     def __taken_location(self, colour):
         if colour == Colour.WHITE:
             return 0
