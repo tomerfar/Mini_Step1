@@ -155,20 +155,29 @@ class Board:
         return json.dumps(data)
 
     def export_state(self):
-        state = [0] * 27
-        for location in range(26):
+        state = [0] * 28
+        for location in range(1, 25):
             pieces = self.pieces_at(location)
             if len(pieces) > 0:
-                state[location] = len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)
+                state[location - 1] = len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)
+        state[24] = len(self.pieces_at(0))  # White pieces blown
+        state[25] = len(self.pieces_at(25))  # Black pieces blown
+        state[26] = len(self.get_taken_pieces(Colour.WHITE))  # White pieces eaten
+        state[27] = len(self.get_taken_pieces(Colour.BLACK))  # Black pieces eaten
         return state
 
     def import_state(self, state):
         self.__pieces = []
-        for location, count in enumerate(state):
+        for location, count in enumerate(state[:24]):
             if count > 0:
-                self.add_many_pieces(count, Colour.WHITE, location)
+                self.add_many_pieces(count, Colour.WHITE, location + 1)
             elif count < 0:
-                self.add_many_pieces(-count, Colour.BLACK, location)
+                self.add_many_pieces(-count, Colour.BLACK, location + 1)
+        self.add_many_pieces(state[24], Colour.WHITE, 0)  # White pieces blown
+        self.add_many_pieces(state[25], Colour.BLACK, 25)  # Black pieces blown
+        self.add_many_pieces(state[26], Colour.WHITE, self.__taken_location(Colour.WHITE))  # White pieces eaten
+        self.add_many_pieces(state[27], Colour.BLACK, self.__taken_location(Colour.BLACK))  # Black pieces eaten
+
 
     def __taken_location(self, colour):
         if colour == Colour.WHITE:
