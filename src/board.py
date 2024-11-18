@@ -1,6 +1,9 @@
 from random import shuffle
 import copy
 import json
+import threading
+import tkinter as tk
+from PIL import Image, ImageTk
 
 from src.colour import Colour
 from src.piece import Piece
@@ -10,6 +13,7 @@ class Board:
     def __init__(self):
         self.__pieces = []
         self.time_winner = None  
+        self.gui_initialized = False
 
     @classmethod
     def create_starting_board(cls):
@@ -120,6 +124,52 @@ class Board:
     def get_move_lambda(self):
         return lambda l, r: self.move_piece(self.get_piece_at(l), r)
 
+    def initialize_gui(self):
+        self.root = tk.Tk()
+        self.root.title("Backgammon Board")
+        self.canvas = tk.Canvas(self.root, width=1280, height=720)
+        self.canvas.pack()
+        self.board_img = Image.open("./pic/board.PNG").resize((1280, 720), Image.Resampling.LANCZOS)
+        self.board_img = ImageTk.PhotoImage(self.board_img)
+        self.white_img = Image.open("./pic/white.PNG").resize((65, 65), Image.Resampling.LANCZOS)
+        self.white_img = ImageTk.PhotoImage(self.white_img)
+        self.black_img = Image.open("./pic/black.PNG").resize((65, 65), Image.Resampling.LANCZOS)
+        self.black_img = ImageTk.PhotoImage(self.black_img)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.board_img)
+        self.gui_initialized = True
+
+    def update_gui(self):
+        if not self.gui_initialized:
+            self.initialize_gui()
+        self.canvas.delete("piece")
+        for location in range(1, 25):
+            pieces = self.pieces_at(location)
+            for i, piece in enumerate(pieces):
+                img = self.white_img if piece.colour == Colour.WHITE else self.black_img
+                x, y = self.get_gui_coordinates(location, i)
+                self.canvas.create_image(x, y, anchor=tk.NW, image=img, tags="piece")
+        self.root.update()
+
+    def get_gui_coordinates(self, location, index=0):
+        if location == 0:
+            return (50, 350 + index * 70)
+        elif location == 25:
+            return (750, 350 + index * 70)
+        else:
+            if location >= 13:
+                x = 15 + (location - 13) * 100
+                y = 0 + index * 65
+            else:
+                x = 15 + (12 - location) * 100
+                y = 655 - index * 65
+            return (x, y)
+
+    def start_gui_thread(self):
+        threading.Thread(target=self.run_gui, daemon=True).start()
+
+    def run_gui(self):
+        self.root.mainloop()
+
     def print_board(self):
         print("  13                  18   19                  24   25")
         print("---------------------------------------------------")
@@ -145,6 +195,7 @@ class Board:
         print(line)
         print("---------------------------------------------------")
         print("  12                  7    6                   1    0")
+        self.update_gui()
 
     def to_json(self):
         data = {}
