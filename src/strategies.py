@@ -4,6 +4,7 @@ from src.piece import Piece
 from src.move_not_possible_exception import MoveNotPossibleException
 
 import threading
+import tkinter
 
 
 class Strategy:

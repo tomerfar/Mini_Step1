@@ -99,14 +99,20 @@ class Game:
 
             if self.time_limit > 0 and not move_made.is_set():  # Modify this line
                 stop_input_event.set()  # Stop input in strategies.py
-                self.board.time_winner = colour.other()
                 if verbose:
-                    print('%s did not make a move in time. %s wins!' % (colour, colour.other()))
-                self.strategies[colour.other()].game_over({
-                    'dice_roll': full_dice_roll,
-                    'opponents_move': moves
-                })
-                return
+                    print('%s did not make a move in time. Skipping turn.' % colour)
+                # Skip the turn and continue to the next player
+                i += 1
+                continue
+
+            # **Insert the game ending check here**
+            if self.board.has_game_ended():  # Check if the game has ended
+                if verbose:
+                    print(f"{self.board.who_won()} has won the game!")
+                stop_input_event.set()  # Stop input in strategies.py as the game is over
+                return  # Exit the loop and end the game
+
+            i += 1 #switching between players turns
 
     def get_rolls_to_move(self, location, requested_move, available_rolls):
         # This first check ensures we return doing as little work as possible when the requested

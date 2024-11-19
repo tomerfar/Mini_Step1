@@ -195,7 +195,7 @@ class Board:
         print(line)
         print("---------------------------------------------------")
         print("  12                  7    6                   1    0")
-        self.update_gui()
+        #self.update_gui()
 
     def to_json(self):
         data = {}
