@@ -2,11 +2,11 @@ import random
 from random import randint
 from src.colour import Colour
 from src.game import Game
+from src.strategy_factory import StrategyFactory
 from src.strategies import HumanStrategy
 
 def print_tournament_placement(player_names):
     print("Tournament Placement:")
-    random.shuffle(player_names)
     for i in range(0, len(player_names), 2):
         if i + 1 < len(player_names):
             print(f"{player_names[i]} vs {player_names[i + 1]}")
@@ -20,8 +20,10 @@ def print_tournament_branch(tournament_branch):
         for matchup in matchups:
             print(f"  {matchup}")
 
-def run_tournament(player_names):
-    players = {name: HumanStrategy(name) for name in player_names}
+def run_tournament(player_names, player_strategies):
+    random.shuffle(player_names)
+    players = {name: player_strategies[name] for name in player_names} #name : Startegy from strategy dictionary
+
     print_tournament_placement(player_names)
     
     time_limit = input("Enter time limit in seconds (or 'inf' for no limit): ")
@@ -30,16 +32,23 @@ def run_tournament(player_names):
     else:
         time_limit = int(time_limit)
     
-    best_of = int(input("Enter the number of games for best of series (must be an odd number): "))
-    if best_of % 2 == 0:
-        raise ValueError("The number of games must be an odd number.")
+    while True:
+            best_of = input("Enter the number of games for best of series (must be an odd number): ")
+            try:
+                best_of = int(best_of)
+                if best_of % 2 == 1:  # Check if the number is odd
+                    break  # Valid input, exit the loop
+                else:
+                    print("The number of games must be an odd number. Please try again.")
+            except ValueError:
+                print("Invalid input. Please enter a valid number.")
     
     game_results = []
     tournament_branch = []
     while len(players) > 1:
         next_round_players = {}
         player_names = list(players.keys())
-        random.shuffle(player_names)
+        #random.shuffle(player_names)
         round_matchups = []
         for i in range(0, len(player_names), 2):
             if i + 1 >= len(player_names):
@@ -62,7 +71,7 @@ def run_tournament(player_names):
                     first_player=current_first_player,
                     time_limit=time_limit
                 )
-                game.run_game(verbose=False)
+                game.run_game(verbose=True)
                 winner = game.who_won()
                 winner_name = player1 if winner == colour1 else player2
                 wins[winner_name] += 1
@@ -86,12 +95,28 @@ if __name__ == '__main__':
     while True:
         try:
             num_players = int(input("Enter the number of players: "))
-            if num_players > 0:
+            if num_players > 1:
                 break
             else:
-                print("The number of players must be greater than 0.")
+                print("Tournament must include more than 1 player. Please try again.")
         except ValueError:
             print("Invalid input. Please enter a valid number.")
+    print("Available Strategies:")
+    strategies = [x for x in StrategyFactory.get_all() if x.__name__ != HumanStrategy.__name__]
+    print("[0] HumanStrategy (N/A)")
+    for i, strategy in enumerate(strategies):
+        print("[%d] %s (%s)" % (i+1, strategy.__name__, strategy.get_difficulty()))
     
-    player_names = [input(f"Name of player {i + 1}: ") for i in range(num_players)]
-    run_tournament(player_names)
+    player_names = []
+    player_strategies = {}
+    for i in range(num_players):
+        player_names.append(input('Name of player %d: ' % (i+1)))
+        strategy_index = int(input('Pick a strategy for player %d:\n' % (i+1)))
+        if strategy_index == 0:
+            player_strategies[player_names[i]] = HumanStrategy(player_names[i])
+        else:
+            chosen_strategy = StrategyFactory.create_by_name(strategies[strategy_index-1].__name__)
+            player_strategies[player_names[i]] = chosen_strategy
+        
+
+    run_tournament(player_names, player_strategies)

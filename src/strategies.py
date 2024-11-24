@@ -1,3 +1,4 @@
+from asyncio import wait
 import time
 from random import shuffle
 from src.piece import Piece
@@ -6,7 +7,9 @@ from src.move_not_possible_exception import MoveNotPossibleException
 import threading
 import tkinter
 
-
+#time test
+#interface V
+#im/ex mode
 class Strategy:
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
         raise NotImplemented()
@@ -22,6 +25,8 @@ class MoveFurthestBackStrategy(Strategy):
         return "Medium"
 
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
+        #wait 2 seconds before moving
+        
         could_not_move_first_roll = False
 
         for i, die_roll in enumerate(dice_roll):

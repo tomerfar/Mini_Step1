@@ -49,6 +49,8 @@ class Game:
         moves = []
         full_dice_roll = []
         while True:
+            if verbose:
+                self.board.print_board()
             previous_dice_roll = full_dice_roll.copy()
             dice_roll = [randint(1, 6), randint(1, 6)]
             if dice_roll[0] == dice_roll[1]:
@@ -77,8 +79,7 @@ class Game:
             opponents_moves = moves.copy()
             moves.clear()
 
-            move_made = threading.Event()  # Add this line
-
+            move_made = threading.Event() 
             # Pass the stop event to the strategy
             stop_input_event = threading.Event()
             self.strategies[colour].stop_input_event = stop_input_event
@@ -91,18 +92,19 @@ class Game:
                     lambda location, die_roll: handle_move(location, die_roll),
                     {'dice_roll': previous_dice_roll, 'opponents_move': opponents_moves}
                 )
-                move_made.set()  # Add this line
+                move_made.set() 
 
-            move_thread = threading.Thread(target=make_move)  # Add this line
-            move_thread.start()  # Add this line
-            move_thread.join(self.time_limit if self.time_limit > 0 else None)  # Modify this line
+            move_thread = threading.Thread(target=make_move) 
+            move_thread.start()
+            move_thread.join(self.time_limit if self.time_limit > 0 else None)  
 
-            if self.time_limit > 0 and not move_made.is_set():  # Modify this line
+            if self.time_limit > 0 and not move_made.is_set(): 
                 stop_input_event.set()  # Stop input in strategies.py
                 if verbose:
                     print('%s did not make a move in time. Skipping turn.' % colour)
                 # Skip the turn and continue to the next player
                 i += 1
+                stop_input_event.clear()  # Clear the stop input event
                 continue
 
             # **Insert the game ending check here**
