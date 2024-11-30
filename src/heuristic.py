@@ -5,76 +5,95 @@ class Heuristic:
     def __init__(self):
         
         self.weights = {
-            "distances_to_home": 1.5,   # Weight for distance from home
-            "pieces in safe zones": 0.5,      # Weight for occupied spaces
-            "number of safe zones": 1.5, # Number of houses we built on the board
-            "number of opponents safe zones": -1.5, # Number of houses the opponent has on the board
-            "number_of_singles": 1.0,    # Weight for single pieces
-            "opponent_pieces": -1.0, # Weight for opponent's taken pieces
-            "taken pieces": -1.0, # Number of opponent's pieces we take in captivity
-            "opponents singles": 1.0, # Number of opponent's pieces that are single on the board
-            "opponent distance to home": -1.0 # Weight for distance of opponent's pieces from home
+             'pieces on board': 1.0,
+             'sum distances': 1.5,
+             'number of_safe_zones': 2.0,
+             'number of singles': -1.0,
+             'number of opponent safe zones': -1.0,
+             'sum_single_distance_away_from_home': -0.5,
+             'sum_distances_to_endzone': 1.0,
+             'taken_pieces': -1.0,
+             'sum distances opponent': -1.0,
+             'number_of_opponent_safe_zones': -1.0,
+             'number_of_opponent_singles': 1.0,
+             'sum_opponent_single_distance_away_from_home': -0.5,
+             'opponents_taken_pieces': 1.5,
+             'opponent_pieces': -1.0
         }
 
-    def evaluate(self, board, colour):
+    def evaluate(self, board, colour) -> float :
         """
     This method evaluates the board for a given player (colour) and returns a score.
     The score should reflect how favorable the board state is for the given player.
     """
+        board_stats = self.assess_board(colour, myboard)
+        board_result = 0
+
+        for key in board_stats.keys():
+           board_result +=  board_stats[key] * self.weights[key]
+        
+        return board_result
+        
             
 
     def assess_board(self, colour, myboard):
-        # Initialize variables
         pieces = myboard.get_pieces(colour)
         pieces_on_board = len(pieces)
-        sum_distances_to_home = 0
-        number_of_singles = 0
-        pieces_in_safe_zones = 0
+
+        sum_distances = 0
         number_of_safe_zones = 0
-        opponents_taken_pieces = len(myboard.get_taken_pieces(colour.other()))
-        opponent_pieces = myboard.get_pieces(colour.other())
-        sum_opponent_distances_to_home = 0
-        opponent_singles = 0
-        opponent_safe_zones = 0
-
-        # Calculate distances to home for player's pieces
+        number_of_singles = 0
+        sum_single_distance_away_from_home = 0
+        sum_distances_to_endzone = 0
+        taken_pieces = len(myboard.get_taken_pieces(colour))
+        
+        
+        sum_distances_opponent = 0
+        number_of_opponent_safe_zones = 0
+        number_of_opponent_singles = 0
+        sum_opponent_single_distance_away_from_home = 0
+                
         for piece in pieces:
-            sum_distances_to_home += piece.spaces_to_home()
-            if piece.is_in_safe_zone():  # Assuming a method for safe zones exists
-                pieces_in_safe_zones += 1
-
-        # Evaluate player's board spaces
-        for location in range(1, 25):  # Assuming 24 positions on the board
-            pieces_at_location = myboard.pieces_at(location)
-            if len(pieces_at_location) != 0 and pieces_at_location[0].colour == colour:
-                if len(pieces_at_location) == 1:
-                    number_of_singles += 1
-                elif len(pieces_at_location) > 1:
-                    number_of_safe_zones += 1
-
-        # Evaluate opponent's board spaces
-        for piece in opponent_pieces:
-            sum_opponent_distances_to_home += piece.spaces_to_home()
-            if piece.is_in_safe_zone():  # Assuming the same safe zone check applies
-                opponent_safe_zones += 1
+            sum_distances += piece.spaces_to_home()
+            if piece.spaces_to_home() > 6:
+                sum_distances_to_endzone += piece.spaces_to_home() - 6
 
         for location in range(1, 25):
-            opponent_pieces_at_location = myboard.pieces_at(location)
-            if len(opponent_pieces_at_location) != 0 and opponent_pieces_at_location[0].colour == colour.other():
-                if len(opponent_pieces_at_location) == 1:
-                    opponent_singles += 1
+            pieces = myboard.pieces_at(location)
+            if len(pieces) != 0:
+                if pieces[0].colour == colour:
+                    if len(pieces) == 1:
+                        number_of_singles += 1
+                        sum_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
+                    elif len(pieces) > 1:
+                        number_of_safe_zones += 1
+                else:
+                     if len(pieces) == 1:
+                        number_of_opponent_singles += 1
+                        sum_opponent_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
+                     else: 
+                        number_of_opponent_safe_zones += 1 
+                    
+        opponents_taken_pieces = len(myboard.get_taken_pieces(colour.other()))
+        opponent_pieces = myboard.get_pieces(colour.other())
 
-        # Return the values mapped to heuristic dictionary keys
+        for piece in opponent_pieces:
+            sum_distances_opponent += piece.spaces_to_home()
         return {
-            "distances_to_home": sum_distances_to_home,
-            "pieces in safe zones": pieces_in_safe_zones,
-            "number of safe zones": number_of_safe_zones,
-            "number of opponents safe zones": opponent_safe_zones,
-            "number_of_singles": number_of_singles,
-            "opponent_pieces": len(opponent_pieces),
-            "taken pieces": opponents_taken_pieces,
-            "opponents singles": opponent_singles,
-            "opponent distance to home": sum_opponent_distances_to_home,
-        }
+            'pieces on board': pieces_on_board,
+            'sum distances': sum_distances,
+            'number of_safe_zones': number_of_safe_zones,
+            'number of singles': number_of_singles,
+            'number of opponent safe zones': number_of_opponent_safe_zones,
+            'sum_single_distance_away_from_home': sum_single_distance_away_from_home,
+            'sum_distances_to_endzone': sum_distances_to_endzone,
+            'taken_pieces': taken_pieces,
+            'sum distances opponent': sum_distances_opponent,
+            'number_of_opponent_safe_zones': number_of_opponent_safe_zones,
+            'number_of_opponent_singles': number_of_opponent_singles,
+            'sum_opponent_single_distance_away_from_home': sum_opponent_single_distance_away_from_home,
+            'opponents_taken_pieces': opponents_taken_pieces,
+            'opponent_pieces': opponent_pieces
+               }
 
  
