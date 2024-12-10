@@ -4,6 +4,7 @@ from src.colour import Colour
 from src.game import Game
 from src.strategy_factory import StrategyFactory
 from src.strategies import HumanStrategy
+from src.minmaxstrategy import MinimaxStrategy
 
 def print_tournament_placement(player_names):
     print("Tournament Placement:")
@@ -61,7 +62,6 @@ def run_tournament(player_names, player_strategies):
             colour1 = Colour(randint(0, 1))
             colour2 = colour1.other()
             first_player = colour1
-
             wins = {player1: 0, player2: 0}
             for game_number in range(1, best_of + 1):
                 current_first_player = first_player if game_number % 2 != 0 else first_player.other()
