@@ -41,6 +41,8 @@ class Game:
         }
         self.time_limit = time_limit
 
+        
+
     def run_game(self, verbose=True):
         if verbose:
             print('%s goes first' % self.first_player)
@@ -61,7 +63,7 @@ class Game:
                 print("%s rolled %s" % (colour, dice_roll))
 
             def handle_move(location, die_roll):
-                rolls_to_move = self.get_rolls_to_move(location, die_roll, dice_roll)
+                rolls_to_move = self.get_rolls_to_move(location, die_roll, dice_roll) # die roll should be contain in dice rolls
                 if rolls_to_move is None:
                     raise MoveNotPossibleException("You cannot move that piece %d" % die_roll)
                 for roll in rolls_to_move:
@@ -75,6 +77,7 @@ class Game:
 
             board_snapshot = self.board.to_json()
             dice_roll_snapshot = dice_roll.copy()
+
 
             opponents_moves = moves.copy()
             moves.clear()

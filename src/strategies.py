@@ -125,3 +125,6 @@ class MoveRandomPiece(Strategy):
                 if board.is_move_possible(piece, die_roll):
                     make_move(piece.location, die_roll)
                     break
+
+
+

@@ -21,7 +21,7 @@ class Heuristic:
              'opponent_pieces': -1.0
         }
 
-    def evaluate(self, board, colour) -> float :
+    def evaluate(self, myboard, colour) -> float :
         """
     This method evaluates the board for a given player (colour) and returns a score.
     The score should reflect how favorable the board state is for the given player.

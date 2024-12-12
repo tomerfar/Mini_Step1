@@ -1,5 +1,6 @@
 from src.compare_all_moves_strategy import CompareAllMovesSimple
 from src.strategies import MoveFurthestBackStrategy, HumanStrategy, MoveRandomPiece
+from src.MiniMaxi import MiniMax
 
 
 class StrategyFactory:
@@ -18,5 +19,6 @@ class StrategyFactory:
             MoveFurthestBackStrategy,
             CompareAllMovesSimple,
             HumanStrategy,
+            MiniMax
         ]
         return strategies

@@ -11,3 +11,5 @@ class Piece:
             return 25 - self.location
         else:
             return self.location
+        
+    

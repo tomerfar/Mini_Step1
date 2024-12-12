@@ -11,63 +11,38 @@ class CompareAllMoves(Strategy):
     def assess_board(self, colour, myboard):
         pieces = myboard.get_pieces(colour)
         pieces_on_board = len(pieces)
-
         sum_distances = 0
-        number_of_safe_zones = 0
         number_of_singles = 0
+        number_occupied_spaces = 0
         sum_single_distance_away_from_home = 0
         sum_distances_to_endzone = 0
-        taken_pieces = len(myboard.get_taken_pieces(colour))
-        
-        
-        sum_distances_opponent = 0
-        number_of_opponent_safe_zones = 0
-        number_of_opponent_singles = 0
-        sum_opponent_single_distance_away_from_home = 0
-                
         for piece in pieces:
-            sum_distances += piece.spaces_to_home()
+            sum_distances = sum_distances + piece.spaces_to_home()
             if piece.spaces_to_home() > 6:
                 sum_distances_to_endzone += piece.spaces_to_home() - 6
-
         for location in range(1, 25):
             pieces = myboard.pieces_at(location)
-            if len(pieces) != 0:
-                if pieces[0].colour == colour:
-                    if len(pieces) == 1:
-                        number_of_singles += 1
-                        sum_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
-                    elif len(pieces) > 1:
-                        number_of_safe_zones += 1
-                else:
-                     if len(pieces) == 1:
-                        number_of_opponent_singles += 1
-                        sum_opponent_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
-                     else: 
-                        number_of_opponent_safe_zones += 1 
-                    
+            if len(pieces) != 0 and pieces[0].colour == colour:
+                if len(pieces) == 1:
+                    number_of_singles = number_of_singles + 1
+                    sum_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
+                elif len(pieces) > 1:
+                    number_occupied_spaces = number_occupied_spaces + 1
         opponents_taken_pieces = len(myboard.get_taken_pieces(colour.other()))
         opponent_pieces = myboard.get_pieces(colour.other())
-
+        sum_distances_opponent = 0
         for piece in opponent_pieces:
-            sum_distances_opponent += piece.spaces_to_home()
+            sum_distances_opponent = sum_distances_opponent + piece.spaces_to_home()
         return {
-            'pieces on board': pieces_on_board,
-            'sum distances': sum_distances,
-            'number of_safe_zones': number_of_safe_zones,
-            'number of singles': number_of_singles,
-            'number of opponent safe zones': number_of_opponent_safe_zones,
-            'sum_single_distance_away_from_home': sum_single_distance_away_from_home,
-            'sum_distances_to_endzone': sum_distances_to_endzone,
-            'taken_pieces': taken_pieces,
-            'sum distances opponent': sum_distances_opponent,
-            'number_of_opponent_safe_zones': number_of_opponent_safe_zones,
-            'number_of_opponent_singles': number_of_opponent_singles,
-            'sum_opponent_single_distance_away_from_home': sum_opponent_single_distance_away_from_home,
+            'number_occupied_spaces': number_occupied_spaces,
             'opponents_taken_pieces': opponents_taken_pieces,
-            'opponent_pieces': opponent_pieces
-               }
-
+            'sum_distances': sum_distances,
+            'sum_distances_opponent': sum_distances_opponent,
+            'number_of_singles': number_of_singles,
+            'sum_single_distance_away_from_home': sum_single_distance_away_from_home,
+            'pieces_on_board': pieces_on_board,
+            'sum_distances_to_endzone': sum_distances_to_endzone,
+        }
 
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
 
@@ -128,7 +103,7 @@ class CompareAllMoves(Strategy):
 
         return {'best_value': best_board_value,
                 'best_moves': best_pieces_to_move}
-
+    
 
 class CompareAllMovesSimple(CompareAllMoves):
 
@@ -186,4 +161,3 @@ class CompareAllMovesWeightingDistanceAndSinglesWithEndGame2(CompareAllMoves):
                       3 * board_stats['pieces_on_board'] + float(board_stats['sum_distances_to_endzone']) / 6
 
         return board_value
-
