@@ -2,15 +2,18 @@ from src.strategies import Strategy
 from src.piece import Piece
 from src.colour import Colour
 from src.board import Board
+import time
+import threading
 
 
 
 class MiniMax(Strategy):
 
 
-    def __init__(self, depth=3):
+    def __init__(self, depth=1):
         super().__init__()
         self.MAX_DEPTH = depth
+        self.stop_input_event = threading.Event()  # Event to signal stopping input
 
     @staticmethod
     def get_difficulty():
@@ -21,7 +24,7 @@ class MiniMax(Strategy):
         Select the best move based on the minimax algorithm and execute it using make_move.
 
         Args:
-            board (BoardState): The current board state.
+            board (Board): The current board state.
             colour (str): The colour of the player.
             dice_rolls (list): List of dice rolls (e.g., [3, 5] or [6, 6, 6, 6]).
             make_move (callback): Callback function to handle the actual move.
@@ -30,22 +33,24 @@ class MiniMax(Strategy):
         Returns:
             None
         """
-        possible_boards_with_moves = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
+        if not board.has_game_ended():
+            print("It is AI turn, his colour is %s, your roll is %s" % (colour, dice_rolls))
+            possible_boards_with_moves = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
+            best_score = float('-inf')
+        #optimal_board = None # To store the board with the best score
+            optimal_move = [] # To store the sequence of moves led to the best board
 
-        best_score = float('-inf')
-       #optimal_board = None # To store the board with the best score
-        optimal_move = [] # To store the sequence of moves led to the best board
+            for b, moves in possible_boards_with_moves.items(): # Iterating through the dict key&value
+                score_for_board_state = self.minimax(board=b,colour=colour, depth=self.MAX_DEPTH, is_maximizing_player=True)
+                if score_for_board_state > best_score:
+                    print(f"new move is the best now, and the move is : {moves}")
+                    best_score = score_for_board_state
+                    #optimal_board = b
+                    optimal_move = moves
 
-        for b, moves in possible_boards_with_moves.items(): # Iterating through the dict key&value
-            score_for_board_state = self.minimax(board=b,colour=colour, depth=self.MAX_DEPTH, is_maximizing_player=True)
-            if score_for_board_state > best_score:
-                best_score = score_for_board_state
-                #optimal_board = b
-                optimal_move = moves
-
-        if len(optimal_move) > 0:
-            for move in optimal_move:
-                make_move(move['piece_at'], move['die_roll'])
+            if len(optimal_move) > 0:
+                for move in optimal_move:
+                    make_move(move['piece_at'], move['die_roll'])
 
 
     def generate_boards(self, board, colour, dice_rolls):
@@ -80,7 +85,7 @@ class MiniMax(Strategy):
                 # Recursively generate boards for the remaining dice rolls after
                 subsequent_boards = self.generate_boards(board_copy, colour, remaining_die_roll)
                 for new_board, moves in subsequent_boards.items():
-                    resulting_boards[new_board] = [{'piece_at': piece.location, 'die_roll':die_roll}] + moves ## Needs to check this one if its correct.
+                    resulting_boards[new_board] = [{'piece_at': piece.location, 'die_roll':die_roll}] + moves
 
         return resulting_boards
     
@@ -93,8 +98,12 @@ class MiniMax(Strategy):
         dice_rolls = []
 
         for d1 in range(1, 7):
-            for d2 in range(d1, 7):  # Only generate one of [1,2] or [2,1], not both
-                probability = 1 / 36  # Each pair of dice rolls has a probability of 1/36
+            for d2 in range(d1, 7):
+                if d1 == d2:  # Only generate one of [1,2] or [2,1], not both
+                    probability = 1 / 36
+                else:
+                    probability = 1 / 18
+                
                 dice_rolls.append(((d1, d2), probability))
 
         return dice_rolls
@@ -105,7 +114,7 @@ class MiniMax(Strategy):
             Recursively calculates the minimax score for a given board state, considering all possible dice rolls and moves.
 
             Args:
-                board (BoardState): The current board state.
+                board (Board): The current board state.
                 depth (int): The depth of recursion (how many moves ahead to consider).
                 is_maximizing_player (bool): Flag indicating whether the current player is the maximizing player.
 
@@ -115,39 +124,34 @@ class MiniMax(Strategy):
                     - The score is adjusted based on dice probabilities.
             """
         print(f"Entering minimax: Depth={depth}, Maximizing Player={is_maximizing_player}")
-        if depth == 0:
+        if depth == 0 : #Tomer - needs to add here some function / methods that the function will also stop depending on the time
+            #self.stop_input_event.is_set() maybe we need it
             return self.evaluate_board(board,colour=colour) # Needs to asses board here, add a function
         
         all_combinations = self.generate_dice_rolls()
         
         for (d1, d2), prob in all_combinations:
-            possible_boards = self.generate_boards(board,colour.other() if is_maximizing_player else colour, dice_rolls=[d1,d2])
-            print(f"Dice: {d1}, {d2}, Prob: {prob}")
-            print(f"Possible boards: {possible_boards}")
+            possible_boards = self.generate_boards(board, colour.other() if is_maximizing_player else colour, dice_rolls=[d1,d2])
 
         if is_maximizing_player:
             best_score = float('-inf')
             for b, moves in possible_boards.items():
                 score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player)
                 score_for_board_state *= prob
-                print(f"Is Max: {is_maximizing_player}, Dice: ({d1}, {d2}), Prob: {prob}")
-                print(f"best score: {best_score}, score_for_board_state: {score_for_board_state}")
                 best_score = max(best_score, score_for_board_state)
-                print(f"best score: {best_score}")
+            print(f"best score: {best_score}")
         
         else:
             best_score = float('inf')
             for b, moves in possible_boards.items():
                 score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player)
                 score_for_board_state *= prob
-                print(f"Is Min: {is_maximizing_player}, Dice: ({d1}, {d2}), Prob: {prob}")
-                print(f"best score: {best_score}, score_for_board_state: {score_for_board_state}")
                 best_score = min(best_score, score_for_board_state)
-                print(f"best score: {best_score}")
+            print(f"best score: {best_score}")
 
         return best_score
     
-    def assess_board(self, colour, myboard):
+    def assess_board(self, colour, myboard): # Tomer - needs to improve heuristic function and then adjust it to the eval func
         pieces = myboard.get_pieces(colour)  # Get the pieces for the given color
         sum_distances = 0
         number_of_singles = 0
@@ -182,7 +186,7 @@ class MiniMax(Strategy):
         }
 
 
-    def evaluate_board(self, myboard, colour):
+    def evaluate_board(self, myboard, colour): # Tomer - Needs to improve the heuristic function
         board_stats = self.assess_board(colour, myboard)
 
         board_value = board_stats['sum_distances'] + 2 * board_stats['number_of_singles'] - \

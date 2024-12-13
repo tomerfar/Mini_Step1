@@ -46,7 +46,6 @@ class Game:
     def run_game(self, verbose=True):
         if verbose:
             print('%s goes first' % self.first_player)
-            self.board.print_board()
         i = self.first_player.value
         moves = []
         full_dice_roll = []
