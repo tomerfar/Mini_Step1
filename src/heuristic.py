@@ -35,7 +35,6 @@ class Heuristic:
         return board_result
         
             
-
     def assess_board(self, colour, myboard):
         pieces = myboard.get_pieces(colour)
         pieces_on_board = len(pieces)
