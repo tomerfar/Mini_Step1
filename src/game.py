@@ -52,6 +52,7 @@ class Game:
         full_dice_roll = []
         while True:
             if verbose:
+               print("\n")
                self.board.print_board() 
             previous_dice_roll = full_dice_roll.copy()
             dice_roll = [randint(1, 6), randint(1, 6)]
@@ -96,15 +97,21 @@ class Game:
                 )
                 move_made.set() 
 
-            move_thread = threading.Thread(target=make_move) 
-            move_thread.start()
-            move_thread.join(self.time_limit if self.time_limit > 0 else None)  
+            move_thread = threading.Thread(target=make_move) # Starts the make_move thread which actively makes the move for the player
+            move_thread.start() # Starts the thread
+            move_thread.join(self.time_limit if self.time_limit > 0 else None) # Stop the main loop thread until the move_thread is finish, either by time limit or by finishing the move
 
             if self.time_limit > 0 and not move_made.is_set(): 
                 stop_input_event.set()  # Stop input in strategies.py
                 if verbose:
-                    log('%s did not make a move in time. Skipping turn.' % colour)
+                    log('%s did not make a move in time. Skipping turn.\n' % colour)
                 # Skip the turn and continue to the next player
+                move_thread.join()
+                if move_thread.is_alive():
+                    log('Warning: Move thread did not terminate properly.\n')
+                else:
+                    log('thread terminated properly.\n')
+
                 i += 1
                 stop_input_event.clear()  # Clear the stop input event
                 continue
@@ -112,8 +119,11 @@ class Game:
             # **Insert the game ending check here**
             if self.board.has_game_ended():  # Check if the game has ended
                 if verbose:
-                    log(f"{self.board.who_won()} has won the game!")
+                    log(f"{self.board.who_won()} has won the game!\n")
                 stop_input_event.set()  # Stop input in strategies.py as the game is over
+                move_thread.join()
+                if move_thread.is_alive():
+                    log('Warning: Move thread did not terminate properly.')
                 return  # Exit the loop and end the game
 
             i += 1 #switching between players turns
