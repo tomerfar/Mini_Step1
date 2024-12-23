@@ -10,7 +10,7 @@ from itertools import permutations
 class MiniMax(Strategy):
 
 
-    def __init__(self, depth=3, time_limit = 5):
+    def __init__(self, depth=2, time_limit = 5):
         super().__init__()
         self.MAX_DEPTH = depth
         self.time_limit = time_limit - 0.5 # Time limit in seconds
@@ -196,10 +196,12 @@ class MiniMax(Strategy):
         #print(f"Entering minimax: Depth={depth}, Maximizing Player={is_maximizing_player}")
 
         #if self.stop_input_event.is_set():
-        elapsed_time = time.time() - start_time
-        if elapsed_time >= self.time_limit:
+        if self.time_limit != -1:
+            elapsed_time = time.time() - start_time
+            if elapsed_time >= self.time_limit:
+                return self.evaluate_board(board, colour=colour)
             #print("Time limit reached, stopping AI turn inside MiniMax foo before depth cond.\n")
-            return float('-inf') if is_maximizing_player else float('inf')
+            #return float('-inf') if is_maximizing_player else float('inf')
         if depth == 0 : #Tomer - needs to add here some function / methods that the function will also stop depending on the time
             #self.stop_input_event.is_set() maybe we need it
             return self.evaluate_board(board,colour=colour) # Needs to asses board here, add a function
@@ -216,7 +218,7 @@ class MiniMax(Strategy):
                 elapsed_time = time.time() - start_time
                 if elapsed_time >= self.time_limit and best_score == float('-inf') and depth < self.MAX_DEPTH:
                         print(f"returning inf with depth = {depth}\n")
-                        return float('inf') # Beacuse its inside the recursion and should pop up at the min calculation 
+                        return self.evaluate_board(b, colour=co) # Beacuse its inside the recursion and should pop up at the min calculation 
                         #print("Time limit reached, stopping AI turn inside MiniMax while max.\n")
                         #print(f"best score: {best_score}")
                 elif elapsed_time >= self.time_limit:

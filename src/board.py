@@ -247,3 +247,6 @@ class Board:
 
     def __remove_piece(self, piece):
         self.__pieces.remove(piece)
+
+    def getTheTimeLim(self):
+        return self.time_limit
