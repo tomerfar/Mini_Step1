@@ -10,19 +10,21 @@ from collections import defaultdict
 import numpy as np
 
 global_time_limit = None
+start_time = time.time()
 
 
 class MonteCarloTreeSearchNode(Strategy):
 
-    def __init__(self, state, parent=None, parent_action=None, child_boards=None):
+    def __init__(self, state, colour, dice_rolls, parent=None, parent_action=None):
         self.state = state # Represent the current Board
         self.parent = parent # None for the root
         self.parent_action = parent_action
         self.children = [] # Data structure might need to change, hold all possible moves 
         self._number_of_visits = 0 # Number of times we visited a node
         self.wins_losses = 0
-        self._untried_actions = child_boards # list of moves we haven't explored yet
-        self.colour = None
+        self._untried_actions = self.generate_boards(state, colour, dice_rolls) # list of moves we haven't explored yet
+        self.colour = colour
+
 
 
     @staticmethod
@@ -33,14 +35,11 @@ class MonteCarloTreeSearchNode(Strategy):
     def move(self, board, colour, dice_rolls, make_move, opponents_activity): # main function
         if board.has_game_ended():
             return
-        global_time_limit = board.getTheTimeLim()
-        start_time = time.time()
+        global_time_limit = board.getTheTimeLim() - 0.5
 
-        root = MonteCarloTreeSearchNode(state=board)
-        self._untried_actions = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
+        root = MonteCarloTreeSearchNode(state=board, colour=colour, dice_rolls=dice_rolls)
         if len(self._untried_actions) == 0:
             print("Didn't generate any boards.\n")
-        self.colour = colour
 
         selected_node = root.best_action()
 
@@ -149,7 +148,7 @@ class MonteCarloTreeSearchNode(Strategy):
         next_state, action = next(iter(self._untried_actions.items()))
         print(f"move that led to next state is {action}") 
         del(self._untried_actions[next_state]) # Delete the key-value pair of the untried_actions field
-        child_node = MonteCarloTreeSearchNode(next_state, parent=self, parent_action=action,)
+        child_node = MonteCarloTreeSearchNode(next_state, parent=self, parent_action=action)
         self.children.append(child_node)
         return child_node 
 
@@ -175,12 +174,14 @@ class MonteCarloTreeSearchNode(Strategy):
     
 
     def best_action(self):
-        simulation_no = 100
+        simulation_no = 0
+        elapsed_time = time.time() - start_time
         # Might need to insert here time limit check
-        for i in range(simulation_no):
+        while elapsed_time > 0 or simulation_no != 100:
             v = self._tree_policy()
             reward = v.rollout()
             v.backpropagate(reward)
+            simulation_no +=1
         return self.best_child(c_param=0.)
     
 

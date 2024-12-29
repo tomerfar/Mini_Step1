@@ -10,14 +10,13 @@ from itertools import permutations
 class MiniMax(Strategy):
 
 
-    def __init__(self, depth=2, time_limit = 5):
+    def __init__(self, depth=1, time_limit = -1):
         super().__init__()
         self.MAX_DEPTH = depth
-        self.time_limit = time_limit - 0.5 # Time limit in seconds
+        self.time_limit = time_limit # Time limit in seconds
         self.stop_input_event = threading.Event()  # Event to signal stopping input
 
         self.weights = { # Dictionary that holds values for the evaluate function
-             #'pieces on board': 1.0,
              'sum distances': -0.5,
              'number of_safe_zones': 5.0,
              'number of singles': -3.0,
@@ -30,7 +29,6 @@ class MiniMax(Strategy):
              'number_of_opponent_singles': 3.0,
              'sum_opponent_single_distance_away_from_home': 1,
              'opponents_taken_pieces': 5,
-             #'opponent_pieces': -1.0
         }
 
     @staticmethod
@@ -54,50 +52,42 @@ class MiniMax(Strategy):
 
         if board.has_game_ended():
             return
-
-         # Start the timer thread
-        # self.stop_input_event.clear()
-        # timer_thread = threading.Thread(target=self._start_timer)
-        # timer_thread.start()
-
+        
+        if(board.getTheTimeLim() != -1): # Init for time in case we have limited time per turn
+            self.time_limit = board.getTheTimeLim() - 0.5
+        
         start_time = time.time()
+            
+
         best_score = float('-inf')
         optimal_move = []
          
-        # try:     
-        #if not board.has_game_ended():
         print("It is AI turn, his colour is %s, your roll is %s" % (colour, dice_rolls))
         possible_boards_with_moves = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
         if len(possible_boards_with_moves) == 0:
             print("Didn't generate any boards.\n")
-        # best_score = float('-inf')
-        #optimal_board = None # To store the board with the best score
-        # optimal_move = [] # To store the sequence of moves led to the best board
 
         
         for b, moves in possible_boards_with_moves.items(): # Iterating through the dict key&value
-            #if self.stop_input_event.is_set():
-            elapsed_time = time.time() - start_time
-            if elapsed_time >= self.time_limit:
-                print(f"Time limit reached during AI computation inside move foo. Making the best move found so far: {optimal_move}")
-                break
+            if self.time_limit != -1:
+                elapsed_time = time.time() - start_time
+                if elapsed_time >= self.time_limit:
+                    print(f"Time limit reached during AI computation inside move foo.")
+                    break
 
-            score_for_board_state = self.minimax(board=b,colour=colour, depth=self.MAX_DEPTH, is_maximizing_player=True, start_time=start_time)
+            score_for_board_state = self.minimax(board=b,colour=colour, depth=self.MAX_DEPTH, is_maximizing_player=True, start_time=start_time, alpha=float('-inf'), beta=float('inf'))
             if score_for_board_state >= best_score:
                 print(f"new move is the best now, and the move is : {moves}\n")
                 best_score = score_for_board_state
-                #optimal_board = b
                 optimal_move = moves
 
-        # finally:
-        #     self.stop_input_event.set()  # Ensure the timer thread stops
-        print(f"AI move:,{best_score} {optimal_move}\n")
+        print(f"AI move:,{optimal_move}\n")
         if len(optimal_move) > 0:
-            print("We do have an optimal move.\n")
             for move in optimal_move:
                 make_move(move['piece_at'], move['die_roll'])
         else:
             print("AI didnt have the time to finish the move or he has a captive piece.\n")
+
 
     def _start_timer(self):
         """
@@ -122,19 +112,16 @@ class MiniMax(Strategy):
         location_of_pieces = list(set(location_of_pieces)) # To avoid duplications, cause location might hold multiple pieces
 
         player_pieces = [board.get_piece_at(loc) for loc in location_of_pieces] # Retreives the actual pieces form each location on the board
-        # player_pieces.sort(key=Piece.spaces_to_home, reverse=True) # Sorts them by their distance to home. maybe we don't need it
 
         # die_roll = dice_rolls[0]
         # remaining_die_roll = dice_rolls[1:]
 
         resulting_boards = {} # Dictionary to store boards and their corresponding moves
         # Consider both orders of dice rolls
-        #print(set(permutations(dice_rolls)))
         for dice_order in (set(permutations(dice_rolls))):
             die_roll = dice_order[0]
             remaining_die_roll = dice_order[1:]
 
-            #valid_move_found = False  # Flag to track if any valid move is found for this die roll
 
             for piece in player_pieces:
                 if board.is_move_possible(piece, die_roll):
@@ -151,11 +138,6 @@ class MiniMax(Strategy):
                     else:
                         for new_board, moves in subsequent_boards.items():
                             resulting_boards[new_board] = [{'piece_at': piece.location, 'die_roll':die_roll}] + moves
-
-            # If no valid moves were found for the remaining die rolls, add the board with the current die roll move
-            # if not valid_move_found and len(remaining_die_roll) == 0:
-            #     # Add the board after the current move (even if no further moves are possible)
-            #     resulting_boards[board] = [{'piece_at': piece.location, 'die_roll': die_roll}]
 
         return resulting_boards
     
@@ -179,7 +161,7 @@ class MiniMax(Strategy):
         return dice_rolls
 
 
-    def minimax(self, board, colour, depth, is_maximizing_player, start_time):
+    def minimax(self, board, colour, depth, is_maximizing_player, start_time, alpha, beta):
         """
             Recursively calculates the minimax score for a given board state, considering all possible dice rolls and moves.
 
@@ -193,20 +175,16 @@ class MiniMax(Strategy):
                     - A higher score is better for the maximizing player, and a lower score is better for the minimizing player.
                     - The score is adjusted based on dice probabilities.
             """
-        #print(f"Entering minimax: Depth={depth}, Maximizing Player={is_maximizing_player}")
-
-        #if self.stop_input_event.is_set():
+        
         if self.time_limit != -1:
             elapsed_time = time.time() - start_time
             if elapsed_time >= self.time_limit:
                 return self.evaluate_board(board, colour=colour)
-            #print("Time limit reached, stopping AI turn inside MiniMax foo before depth cond.\n")
-            #return float('-inf') if is_maximizing_player else float('inf')
-        if depth == 0 : #Tomer - needs to add here some function / methods that the function will also stop depending on the time
-            #self.stop_input_event.is_set() maybe we need it
-            return self.evaluate_board(board,colour=colour) # Needs to asses board here, add a function
+         
+        if depth == 0 : 
+            return self.evaluate_board(board,colour=colour)
         
-        all_combinations = self.generate_dice_rolls() # Check if it creates doubles.
+        all_combinations = self.generate_dice_rolls()
         
         for (d1, d2), prob in all_combinations:
             possible_boards = self.generate_boards(board, colour.other() if is_maximizing_player else colour, dice_rolls=[d1,d2])
@@ -214,39 +192,36 @@ class MiniMax(Strategy):
         if is_maximizing_player:
             best_score = float('-inf')
             for b, moves in possible_boards.items():
-                #if self.stop_input_event.is_set():
-                elapsed_time = time.time() - start_time
-                if elapsed_time >= self.time_limit and best_score == float('-inf') and depth < self.MAX_DEPTH:
-                        print(f"returning inf with depth = {depth}\n")
-                        return self.evaluate_board(b, colour=co) # Beacuse its inside the recursion and should pop up at the min calculation 
-                        #print("Time limit reached, stopping AI turn inside MiniMax while max.\n")
-                        #print(f"best score: {best_score}")
-                elif elapsed_time >= self.time_limit:
-                        return best_score  # Return the best score found so far
+                if self.time_limit != -1:
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time >= self.time_limit and best_score == float('-inf') and depth < self.MAX_DEPTH:
+                            return self.evaluate_board(b, colour=colour) # Beacuse its inside the recursion and should pop up at the min calculation 
+                    elif elapsed_time >= self.time_limit:
+                            return best_score  # Return the best score found so far
                 
-                score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player, start_time=start_time)
+                score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player, start_time=start_time, alpha=alpha, beta=beta)
                 score_for_board_state *= prob
                 best_score = max(best_score, score_for_board_state)
-            #print(f"best score: {best_score}")
-        
+                alpha = max(alpha, best_score)
+                if beta <= alpha:
+                    break
         else:
             best_score = float('inf')
             for b, moves in possible_boards.items():
-                #if self.stop_input_event.is_set():
-                elapsed_time = time.time() - start_time
-                if elapsed_time >= self.time_limit and best_score == float('inf'):
-                        #print("Time limit reached, stopping AI turn inside MiniMax while min.\n")
-                        #print(f"best score: {best_score}")
-                        print(f"returning -inf with depth = {depth}\n")
-                        return float('-inf')  # Return the best score found so far
-                elif elapsed_time >= self.time_limit:
-                    return best_score
+                if self.time_limit != -1:
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time >= self.time_limit and best_score == float('inf'):
+                            return float('-inf')  # Return the best score found so far
+                    elif elapsed_time >= self.time_limit:
+                        return best_score
                 
-                score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player, start_time=start_time)
+                score_for_board_state = self.minimax(b,colour=colour, depth=depth - 1, is_maximizing_player=not is_maximizing_player, start_time=start_time, alpha=alpha, beta=beta)
                 score_for_board_state *= prob
                 best_score = min(best_score, score_for_board_state)
+                beta = min(beta, best_score)
+                if beta <= alpha:
+                    break 
 
-        #print("Reached best score at the end of the minimax foo\n")
         return best_score
 
     
@@ -294,7 +269,6 @@ class MiniMax(Strategy):
         for piece in opponent_pieces:
             sum_distances_opponent += piece.spaces_to_home()
         return {
-            #'pieces on board': pieces_on_board,
             'sum distances': sum_distances,
             'number of_safe_zones': number_of_safe_zones,
             'number of singles': number_of_singles,
@@ -307,7 +281,6 @@ class MiniMax(Strategy):
             'number_of_opponent_singles': number_of_opponent_singles,
             'sum_opponent_single_distance_away_from_home': sum_opponent_single_distance_away_from_home,
             'opponents_taken_pieces': opponents_taken_pieces,
-            #'opponent_pieces': opponent_pieces
                 }
     
 
