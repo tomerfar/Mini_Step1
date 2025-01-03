@@ -9,6 +9,9 @@ class StrategyFactory:
     def create_by_name(strategy_name):
         for strategy in StrategyFactory.get_all():
             if strategy.__name__ == strategy_name:
+                if strategy_name == "MonteCarloTreeSearchNode":
+                    return MonteCarloTreeSearchNode(state=None, colour=None,dice_rolls=None)
+                
                 return strategy()
 
         raise Exception("Cannot find strategy %s" % strategy_name)

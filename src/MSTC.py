@@ -9,8 +9,8 @@ import threading
 from collections import defaultdict
 import numpy as np
 
-global_time_limit = None
-start_time = time.time()
+
+
 
 
 class MonteCarloTreeSearchNode(Strategy):
@@ -19,10 +19,14 @@ class MonteCarloTreeSearchNode(Strategy):
         self.state = state # Represent the current Board
         self.parent = parent # None for the root
         self.parent_action = parent_action
-        self.children = [] # Data structure might need to change, hold all possible moves 
+        self.children = self.generate_dice_rolls()
+        for k in self.children.keys():
+            self.children[k] = []
+
         self._number_of_visits = 0 # Number of times we visited a node
         self.wins_losses = 0
-        self._untried_actions = self.generate_boards(state, colour, dice_rolls) # list of moves we haven't explored yet
+        self.untried_actions = self.generate_dice_rolls()
+        # self.untried_actions = self.generate_boards(state, colour, dice_rolls) # list of moves we haven't explored yet
         self.colour = colour
 
 
@@ -35,13 +39,16 @@ class MonteCarloTreeSearchNode(Strategy):
     def move(self, board, colour, dice_rolls, make_move, opponents_activity): # main function
         if board.has_game_ended():
             return
+        global start_time
+        start_time = time.time()
+        global global_time_limit
         global_time_limit = board.getTheTimeLim() - 0.5
 
         root = MonteCarloTreeSearchNode(state=board, colour=colour, dice_rolls=dice_rolls)
-        if len(self._untried_actions) == 0:
-            print("Didn't generate any boards.\n")
+        slice_dice_rolls = dice_rolls[:2]
+        root.untried_actions[tuple(sorted(slice_dice_rolls))] = root.generate_boards(board=board, colour=colour, dice_rolls=dice_rolls)
 
-        selected_node = root.best_action()
+        selected_node = root.best_action(dice_rolls, board, colour)
 
         
         for move in selected_node.parent_action: # Callback for handle_move
@@ -102,7 +109,7 @@ class MonteCarloTreeSearchNode(Strategy):
             
 
     def untried_actions(self,):
-        return self._untried_actions
+        return self.untried_actions
     
 
     def n(self):
@@ -126,11 +133,12 @@ class MonteCarloTreeSearchNode(Strategy):
                 shuffle(valid_pieces) # makes the random action
                 for piece in valid_pieces:
                     if current_rollout_state.is_move_possible(piece, die_roll):
-                        current_rollout_state.move_piece(piece.location, die_roll)
+                        piece_in_copy = current_rollout_state.get_piece_at(piece.location)
+                        current_rollout_state.move_piece(piece_in_copy, die_roll)
                         break
-            colour = Colour.other()
+            colour = self.colour.other()
 
-        return current_rollout_state.game_result(current_rollout_state)
+        return self.game_result(current_rollout_state)
 
 
     def backpropagate(self, result):
@@ -140,49 +148,65 @@ class MonteCarloTreeSearchNode(Strategy):
             self.parent.backpropagate(result)
 
 
-    def is_fully_expanded(self):
-        return len(self._untried_actions) == 0
+    def is_fully_expanded(self, dice_rolls):
+        sorted_dice_rolls = tuple(sorted(dice_rolls))
+        slice_dice_rolls = sorted_dice_rolls[:2]
+        return len(self.untried_actions[slice_dice_rolls]) == 0
     
 
-    def expand(self):
-        next_state, action = next(iter(self._untried_actions.items()))
+    def expand(self, dice_rolls):
+        sorted_dice_rolls = tuple(sorted(dice_rolls))
+        slice_dice_rolls = sorted_dice_rolls[:2]
+        
+        next_state, action = next(iter(self.untried_actions[slice_dice_rolls].items()))
         print(f"move that led to next state is {action}") 
-        del(self._untried_actions[next_state]) # Delete the key-value pair of the untried_actions field
-        child_node = MonteCarloTreeSearchNode(next_state, parent=self, parent_action=action)
-        self.children.append(child_node)
+        del(self.untried_actions[slice_dice_rolls][next_state]) # Delete the key-value pair of the untried_actions field
+
+        child_node = MonteCarloTreeSearchNode(next_state, self.colour.other(), dice_rolls=[None, None], parent=self, parent_action=action)
+        self.children[slice_dice_rolls].append(child_node)
         return child_node 
 
         
-    def best_child(self, c_param=0.1): #UCB, need to multiply -1 if its the opponent's turn
-        choices_weights = [(c.wins_losses / c.n()) + c_param * np.sqrt((2 * np.log(self.n()) / c.n())) for c in self.children]
-        return self.children[np.argmax(choices_weights)]
-
+    def best_child(self, dice_rolls, c_param=0.1): #UCB, need to multiply -1 if its the opponent's turn
+        sorted_dice_rolls = tuple(sorted(dice_rolls))
+        slice_dice_rolls = sorted_dice_rolls[:2]
+        choices_weights = [(c.wins_losses / c.n()) + c_param * np.sqrt((2 * np.log(self.n()) / c.n())) for c in self.children[slice_dice_rolls]]
+        best_index = np.argmax(choices_weights)
+        print(f"{best_index}")
+        return self.children[slice_dice_rolls][int(best_index)]
 
     def rollout_policy(self, possible_moves):
         return possible_moves[np.random.randint(len(possible_moves))]
 
 
-    def _tree_policy(self):
+    def _tree_policy(self, dice_rolls, board, colour):
         current_node = self
         while not current_node.is_terminal_node():
-            if not current_node.is_fully_expanded():
+            if not current_node.is_fully_expanded(dice_rolls):
                 
-                return current_node.expand()
+                return current_node.expand(dice_rolls)
             else:
-                current_node = current_node.best_child()
+                current_node = current_node.best_child(dice_rolls, c_param=0.1)
+
+                dice_rolls = [randint(1, 6), randint(1, 6)]
+                if dice_rolls[0] == dice_rolls[1]:
+                    dice_rolls = [dice_rolls[0]] * 4
+                slice_dice_rolls = dice_rolls[:2]
+                if current_node.untried_actions[tuple(sorted(slice_dice_rolls))] == None:
+                    current_node.untried_actions[tuple(sorted(slice_dice_rolls))] = current_node.generate_boards(board=current_node.state, colour=current_node.colour, dice_rolls=dice_rolls)
+                    
         return current_node
     
 
-    def best_action(self):
+    def best_action(self, dice_rolls, board, colour):
         simulation_no = 0
         elapsed_time = time.time() - start_time
-        # Might need to insert here time limit check
-        while elapsed_time > 0 or simulation_no != 100:
-            v = self._tree_policy()
+        while elapsed_time > global_time_limit or simulation_no != 3:
+            v = self._tree_policy(dice_rolls, board, colour)
             reward = v.rollout()
             v.backpropagate(reward)
             simulation_no +=1
-        return self.best_child(c_param=0.)
+        return self.best_child(dice_rolls, c_param=0.)
     
 
     def game_result(self, current_rollout_state):
@@ -191,9 +215,23 @@ class MonteCarloTreeSearchNode(Strategy):
         on your state corresponding to win, a loss or mars.
         '''
         # Check for mars
-        if len(current_rollout_state.get_pieces(self.colour) == 0 and current_rollout_state.get_pieces(self.colour.other) == 15):
+        if len(current_rollout_state.get_pieces(self.colour)) == 0 and len(current_rollout_state.get_pieces(self.colour.other)) == 15:
             return 2
-        elif len(current_rollout_state.get_pieces(self.colour) == 15 and current_rollout_state.get_pieces(self.colour.other) == 0):
+        elif len(current_rollout_state.get_pieces(self.colour)) == 15 and len(current_rollout_state.get_pieces(self.colour.other)) == 0:
             return -2
         # Regular win
         return 1 if len(current_rollout_state.get_pieces(self.colour)) == 0 else -1
+
+
+    def generate_dice_rolls(self):
+        """
+        Generate all possible dice rolls (d1, d2) where d1 and d2 are between 1 and 6,
+        and treats [1,2] as equivalent to [2,1] for backgammon, adding only [1,2] and not [2,1].
+        """
+        dice_rolls_dict = {}
+
+        for d1 in range(1, 7):
+            for d2 in range(d1, 7):
+                dice_rolls_dict[(d1, d2)] = None
+
+        return dice_rolls_dict
