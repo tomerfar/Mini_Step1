@@ -62,7 +62,7 @@ class MiniMax(Strategy):
         best_score = float('-inf')
         optimal_move = []
          
-        print("It is AI turn, his colour is %s, your roll is %s" % (colour, dice_rolls))
+        #print("It is AI turn, his colour is %s, your roll is %s" % (colour, dice_rolls))
         possible_boards_with_moves = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
         if len(possible_boards_with_moves) == 0:
             print("Didn't generate any boards.\n")
@@ -72,21 +72,19 @@ class MiniMax(Strategy):
             if self.time_limit != -1:
                 elapsed_time = time.time() - start_time
                 if elapsed_time >= self.time_limit:
-                    print(f"Time limit reached during AI computation inside move foo.")
+                    #print(f"Time limit reached during AI computation inside move foo.")
                     break
 
             score_for_board_state = self.minimax(board=b,colour=colour, depth=self.MAX_DEPTH, is_maximizing_player=True, start_time=start_time, alpha=float('-inf'), beta=float('inf'))
             if score_for_board_state >= best_score:
-                print(f"new move is the best now, and the move is : {moves}\n")
+                #print(f"new move is the best now, and the move is : {moves}\n")
                 best_score = score_for_board_state
                 optimal_move = moves
 
-        print(f"AI move:,{optimal_move}\n")
+        #print(f"AI move:,{optimal_move}\n")
         if len(optimal_move) > 0:
             for move in optimal_move:
                 make_move(move['piece_at'], move['die_roll'])
-        else:
-            print("AI didnt have the time to finish the move or he has a captive piece.\n")
 
 
     def _start_timer(self):
