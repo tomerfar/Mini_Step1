@@ -210,7 +210,7 @@ class MonteCarloTreeSearchNode(Strategy):
 
     def best_action(self, dice_rolls, board, colour):
         simulation_no = 0
-        if board.getTheTimeLim() != -1:
+        if board.getTheTimeLim() != -1: # If there is time limit for the player's turn
             while (time.time() - start_time) < global_time_limit and simulation_no != 100:
                 v = self._tree_policy(dice_rolls, board, colour)
                 reward = v.rollout()
@@ -223,7 +223,8 @@ class MonteCarloTreeSearchNode(Strategy):
                 reward = v.rollout()
                 v.backpropagate(reward)
                 simulation_no +=1
-
+        
+        print(f"simulation number : {simulation_no}")
         return self.best_child(dice_rolls, c_param=2)
     
 

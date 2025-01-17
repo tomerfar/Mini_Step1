@@ -7,6 +7,8 @@ import threading
 from itertools import permutations
 
 
+#Authors: Koral Shilon & Tomer Faran
+
 class MiniMax(Strategy):
 
 
@@ -33,7 +35,7 @@ class MiniMax(Strategy):
 
     @staticmethod
     def get_difficulty():
-        return "Minimax"
+        return "MiniMax208582650_318762051"
     
     def move(self, board, colour, dice_rolls, make_move, opponents_activity):
         """
