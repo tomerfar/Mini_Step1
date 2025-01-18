@@ -205,7 +205,7 @@ class Board:
                 data[location] = {'colour': pieces[0].colour.__str__(), 'count': len(pieces)}
         return json.dumps(data)
 
-    def export_state(self):
+    def export_state(self): # Convert board into a vector
         state = [0] * 28
         for location in range(1, 25):
             pieces = self.pieces_at(location)

@@ -1,6 +1,10 @@
 import torch
 from game import Game
 from Brain import Brain
+from src.strategies import MoveRandomPiece
+from src.MLplayer import MLPlayer
+from src.colour import Colour
+from random import randint
 
 class Training:
     def __init__(self, brain=None):
@@ -16,23 +20,33 @@ class Training:
             self.brain = self.brain.load_saved_brain(brain)
 
     def initialize_neural_network(self):
-        init_game = Game('COMPUTER', 'COMPUTER') # Need to change to other players
-        init_game.run_game()
+
+        game = Game(
+        white_strategy=MoveRandomPiece,
+        black_strategy=MoveRandomPiece,
+        first_player=Colour(randint(0, 1)),
+        time_limit=-1
+        )
+        game.run_game(verbose=False)
         # Train the neural network initially on the starting board
-        self.brain.train_brain(init_game.game_boards, init_game.who_won_the_game().colour)
+        self.brain.train_brain(init_game.game_boards,  game.who_won().colour)
+        
 
     def train(self, iterations, names):
         name_index = 0
 
         for i in range(iterations[-1]):
             # Create a new game instance for each training iteration
-            game = Game('ML', 'ML') # 
-            game.player1.brain = self.brain
-            game.player2.brain = self.brain
-            game.run_game()
+            game = Game(
+            white_strategy=MLPlayer,
+            black_strategy=MLPlayer,
+            first_player=Colour(randint(0, 1)),
+            time_limit=-1
+            )
+            game.run_game(verbose=False)
 
             # Train the brain with the game boards and winner's color
-            self.brain.train_brain(game.game_boards, game.who_won_the_game().colour)
+            self.brain.train_brain(game.game_boards, game.who_won().colour)
             self.brain.games_played += 1
 
             if i >= iterations[name_index] - 1:

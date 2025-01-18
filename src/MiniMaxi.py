@@ -35,7 +35,7 @@ class MiniMax(Strategy):
 
     @staticmethod
     def get_difficulty():
-        return "MiniMax208582650_318762051"
+        return "MiniMax"
     
     def move(self, board, colour, dice_rolls, make_move, opponents_activity):
         """

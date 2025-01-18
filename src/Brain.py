@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from Board import Board
+from board import Board
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size):
@@ -17,8 +17,10 @@ class NeuralNetwork(nn.Module):
             nn.Linear(64, 1)  # Output a single value
         )
 
+
     def forward(self, x):
         return self.network(x)
+    
 
 class Brain:
     def __init__(self):
@@ -29,6 +31,7 @@ class Brain:
         self.name = None
         self.lambda_value = 0.7
 
+
     def save_brain(self, file_name=None):
         if file_name is None:
             file_name = input("Please give a name to the brain: ")
@@ -36,12 +39,14 @@ class Brain:
         full_file_name = os.getcwd() + "\\" + file_name + ".pt"
         torch.save(self.neural_network.state_dict(), full_file_name)
 
+
     @staticmethod
     def load_saved_brain(file_name):
         path = os.getcwd() + "\\" + file_name + ".pt"
         neural_network = NeuralNetwork()
         neural_network.load_state_dict(torch.load(path))
         return neural_network
+    
 
     def train_brain(self, game_boards, game_winner_colour):
         to_fit = self.generate_to_fit_vector(game_boards, game_winner_colour).ravel()
@@ -53,6 +58,7 @@ class Brain:
         loss = self.criterion(outputs, to_fit_tensor)
         loss.backward()
         self.optimizer.step()
+
 
     def generate_to_fit_vector(self, game_boards, game_winner_colour):
         game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)

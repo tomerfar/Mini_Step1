@@ -128,3 +128,35 @@ class MoveRandomPiece(Strategy):
 
 
 
+# class MoveRandomPiece(Strategy):
+
+#     def __init__(self):
+#         self.game_data = []  # List to store board states and heuristic values
+
+#     @staticmethod
+#     def get_difficulty():
+#         return "Easy"
+
+#     def move(self, board, colour, dice_roll, make_move, opponents_activity):
+#         for die_roll in dice_roll:
+#             valid_pieces = board.get_pieces(colour)
+#             shuffle(valid_pieces)
+#             for piece in valid_pieces:
+#                 if board.is_move_possible(piece, die_roll):
+#                     # Capture board state and heuristic value before making the move
+#                     current_board_state = board.get_state()  # Assuming board has a get_state() method
+#                     heuristic_value = board.evaluate_heuristic(colour)  # Assuming a heuristic evaluation method
+
+#                     # Store the board state and heuristic in the game_data list
+#                     self.game_data.append({
+#                         "board": current_board_state,
+#                         "heuristic": heuristic_value
+#                     })
+
+#                     # Make the move
+#                     make_move(piece.location, die_roll)
+#                     break
+        
+
+
+
