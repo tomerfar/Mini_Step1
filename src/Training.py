@@ -1,7 +1,7 @@
 import torch
-from game import Game
-from Brain import Brain
-from src.strategies import MoveRandomPiece
+from src.game import Game
+from src.Brain import Brain
+from src.strategies import MoveRandomTraining
 from src.MLplayer import MLPlayer
 from src.colour import Colour
 from random import randint
@@ -22,14 +22,17 @@ class Training:
     def initialize_neural_network(self):
 
         game = Game(
-        white_strategy=MoveRandomPiece,
-        black_strategy=MoveRandomPiece,
+        white_strategy=MoveRandomTraining(),
+        black_strategy=MoveRandomTraining(),
         first_player=Colour(randint(0, 1)),
         time_limit=-1
         )
+        print("reached run game")
         game.run_game(verbose=False)
         # Train the neural network initially on the starting board
-        self.brain.train_brain(init_game.game_boards,  game.who_won().colour)
+
+        self.brain.pre_train_brain(game.strategies[Colour.WHITE].game_data)
+        self.brain.save_brain()
         
 
     def train(self, iterations, names):

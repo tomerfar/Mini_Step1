@@ -7,7 +7,7 @@ import threading
 from itertools import permutations
 
 
-#Authors: Koral Shilon & Tomer Faran
+# Authors: Koral Shilon & Tomer Faran
 
 class MiniMax(Strategy):
 

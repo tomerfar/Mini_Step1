@@ -3,6 +3,7 @@ import time
 from random import shuffle
 from src.piece import Piece
 from src.move_not_possible_exception import MoveNotPossibleException
+from src.colour import Colour
 
 import threading
 import tkinter
@@ -128,34 +129,96 @@ class MoveRandomPiece(Strategy):
 
 
 
-# class MoveRandomPiece(Strategy):
+class MoveRandomTraining(Strategy):
 
-#     def __init__(self):
-#         self.game_data = []  # List to store board states and heuristic values
+    def __init__(self):
+        self.game_data = []  # List to store board states and heuristic values
 
-#     @staticmethod
-#     def get_difficulty():
-#         return "Easy"
+    @staticmethod
+    def get_difficulty():
+        return "Training stage 1"
 
-#     def move(self, board, colour, dice_roll, make_move, opponents_activity):
-#         for die_roll in dice_roll:
-#             valid_pieces = board.get_pieces(colour)
-#             shuffle(valid_pieces)
-#             for piece in valid_pieces:
-#                 if board.is_move_possible(piece, die_roll):
-#                     # Capture board state and heuristic value before making the move
-#                     current_board_state = board.get_state()  # Assuming board has a get_state() method
-#                     heuristic_value = board.evaluate_heuristic(colour)  # Assuming a heuristic evaluation method
+    def move(self, board, colour, dice_roll, make_move, opponents_activity):
+        for die_roll in dice_roll:
+            valid_pieces = board.get_pieces(colour)
+            shuffle(valid_pieces)
+            for piece in valid_pieces:
+                if board.is_move_possible(piece, die_roll):
+                    # Capture board state and heuristic value before making the move
+                    current_board_state = self.convert_board_to_vector(board=board) # Not sure we need it
+                    heuristic_value = self.evaluate_board(myboard=board, colour=colour)
 
-#                     # Store the board state and heuristic in the game_data list
-#                     self.game_data.append({
-#                         "board": current_board_state,
-#                         "heuristic": heuristic_value
-#                     })
+                    # Store the board state and heuristic in the game_data list
+                    self.game_data.append({
+                        "board": current_board_state,
+                        "heuristic": heuristic_value
+                    })
 
-#                     # Make the move
-#                     make_move(piece.location, die_roll)
-#                     break
+                    # Make the move
+                    make_move(piece.location, die_roll)
+                    break
+
+    
+    def evaluate_board(self, myboard, colour):
+        board_stats = self.assess_board(colour, myboard)
+
+        board_value = board_stats['sum_distances'] - float(board_stats['sum_distances_opponent']) / 3 + \
+                      float(board_stats['sum_single_distance_away_from_home']) / 6 - \
+                      board_stats['number_occupied_spaces'] - board_stats['opponents_taken_pieces'] + \
+                      3 * board_stats['pieces_on_board'] + float(board_stats['sum_distances_to_endzone']) / 6
+
+        return board_value
+    
+    
+    def assess_board(self, colour, myboard):
+        pieces = myboard.get_pieces(colour)
+        pieces_on_board = len(pieces)
+        sum_distances = 0
+        number_of_singles = 0
+        number_occupied_spaces = 0
+        sum_single_distance_away_from_home = 0
+        sum_distances_to_endzone = 0
+        for piece in pieces:
+            sum_distances = sum_distances + piece.spaces_to_home()
+            if piece.spaces_to_home() > 6:
+                sum_distances_to_endzone += piece.spaces_to_home() - 6
+        for location in range(1, 25):
+            pieces = myboard.pieces_at(location)
+            if len(pieces) != 0 and pieces[0].colour == colour:
+                if len(pieces) == 1:
+                    number_of_singles = number_of_singles + 1
+                    sum_single_distance_away_from_home += 25 - pieces[0].spaces_to_home()
+                elif len(pieces) > 1:
+                    number_occupied_spaces = number_occupied_spaces + 1
+        opponents_taken_pieces = len(myboard.get_taken_pieces(colour.other()))
+        opponent_pieces = myboard.get_pieces(colour.other())
+        sum_distances_opponent = 0
+        for piece in opponent_pieces:
+            sum_distances_opponent = sum_distances_opponent + piece.spaces_to_home()
+        return {
+            'number_occupied_spaces': number_occupied_spaces,
+            'opponents_taken_pieces': opponents_taken_pieces,
+            'sum_distances': sum_distances,
+            'sum_distances_opponent': sum_distances_opponent,
+            'number_of_singles': number_of_singles,
+            'sum_single_distance_away_from_home': sum_single_distance_away_from_home,
+            'pieces_on_board': pieces_on_board,
+            'sum_distances_to_endzone': sum_distances_to_endzone,
+        }
+    
+    def convert_board_to_vector(self, board): # Convert board into a normalize vector
+        board_vector = [0] * 28
+        for location in range(1, 25):
+            pieces = board.pieces_at(location)
+            if len(pieces) > 0:
+                board_vector[location - 1] = (len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)) / 15 
+        board_vector[24] = (len(board.pieces_at(0))) / 15  # White pieces blown 
+        board_vector[25] = (len(board.pieces_at(25))) / 15  # Black pieces blown MIGHT NEED minus BEFORE THE len
+        board_vector[26] = (len(board.get_taken_pieces(Colour.WHITE))) / 15  # White pieces eaten
+        board_vector[27] = (len(board.get_taken_pieces(Colour.BLACK))) / 15  # Black pieces eaten MIGHT NEED minus BEFORE THE len
+        return board_vector
+
+
         
 
 

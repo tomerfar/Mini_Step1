@@ -2,8 +2,8 @@ import torch
 from src.strategies import Strategy
 from src.colour import Colour
 from src.move_not_possible_exception import MoveNotPossibleException
-from Brain import NeuralNetwork  # Assume this is your neural network class
-from Brain import Brain
+from src.Brain import NeuralNetwork  # Assume this is your neural network class
+from src.Brain import Brain
 from itertools import permutations
 
 class MLPlayer(Strategy):

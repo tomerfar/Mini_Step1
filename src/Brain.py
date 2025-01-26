@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from board import Board
+from src.board import Board
 
 class NeuralNetwork(nn.Module):
     def __init__(self, input_size):
@@ -25,7 +25,7 @@ class NeuralNetwork(nn.Module):
 class Brain:
     def __init__(self):
         self.neural_network = NeuralNetwork(input_size=28)
-        self.optimizer = optim.Adam(self.neural_network.parameters(), lr=1) # lr might be changed
+        self.optimizer = optim.Adam(self.neural_network.parameters(), lr=0.01) # lr might be changed
         self.criterion = nn.MSELoss()
         self.games_played = 0
         self.name = None
@@ -47,11 +47,38 @@ class Brain:
         neural_network.load_state_dict(torch.load(path))
         return neural_network
     
+    
+    def pre_train_brain(self, game_data):
+        # Extract board states and heuristic values from game_data
+        board_states = [data['board'] for data in game_data]
+        heuristic_values = [data['heuristic'] for data in game_data]
+        print(f"boards:{board_states}")
+        print(f"values:{heuristic_values}")
+
+        # Convert board states and heuristic values to tensors
+        board_states_tensor = torch.tensor(board_states, dtype=torch.float32)
+        heuristic_values_tensor = torch.tensor(heuristic_values, dtype=torch.float32).view(-1, 1)
+
+        # Zero the gradients
+        self.optimizer.zero_grad()
+
+        # Forward pass: compute predicted outputs by passing inputs to the model
+        outputs = self.neural_network(board_states_tensor)
+
+        # Compute the loss
+        loss = self.criterion(outputs, heuristic_values_tensor)
+
+        # Backward pass: compute gradient of the loss with respect to model parameters
+        loss.backward()
+
+        # Perform a single optimization step (parameter update)
+        self.optimizer.step()
+    
 
     def train_brain(self, game_boards, game_winner_colour):
         to_fit = self.generate_to_fit_vector(game_boards, game_winner_colour).ravel()
         game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
-        to_fit_tensor = torch.tensor(to_fit, dtype=torch.float32)
+        to_fit_tensor = torch.tensor(to_fit, dtype=torch.float32).view(-1, 1)
 
         self.optimizer.zero_grad()
         outputs = self.neural_network(game_boards_tensor)
