@@ -40,13 +40,19 @@ class Brain:
         torch.save(self.neural_network.state_dict(), full_file_name)
 
 
+    # @staticmethod
+    # def load_saved_brain(file_name):
+    #     path = os.getcwd() + "\\" + file_name + ".pt"
+    #     neural_network = NeuralNetwork(input_size=28)
+    #     neural_network.load_state_dict(torch.load(path, weights_only=True))
+    #     return neural_network
+    
     @staticmethod
     def load_saved_brain(file_name):
-        path = os.getcwd() + "\\" + file_name + ".pt"
-        neural_network = NeuralNetwork()
-        neural_network.load_state_dict(torch.load(path))
-        return neural_network
-    
+        path = os.path.join(os.getcwd(), f"{file_name}.pt")
+        brain_instance = Brain()  # Initialize an empty Brain instance
+        brain_instance.neural_network.load_state_dict(torch.load(path, weights_only=True))
+        return brain_instance  # Return the fully constructed Brain object
     
     def pre_train_brain(self, game_data):
         # Extract board states and heuristic values from game_data
@@ -79,35 +85,69 @@ class Brain:
         print(f"Pre-train Loss: {loss.item()}")
     
 
-    def train_brain(self, game_boards, game_winner_colour):
-        to_fit = self.generate_to_fit_vector(game_boards, game_winner_colour).ravel()
-        game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
+    # def train_brain(self, game_boards, game_winner_colour):
+    #     to_fit = self.generate_to_fit_vector(game_boards, game_winner_colour).ravel()
+    #     game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
+    #     to_fit_tensor = torch.tensor(to_fit, dtype=torch.float32).view(-1, 1)
+
+    #     self.optimizer.zero_grad()
+    #     outputs = self.neural_network(game_boards_tensor)
+    #     loss = self.criterion(outputs, to_fit_tensor)
+    #     loss.backward()
+    #     self.optimizer.step()
+
+    def train_brain(self, game_data, game_winner_colour):
+        # Extract board states from game_data
+        board_states = [data['board'] for data in game_data]
+        
+        # Generate target values (0 or 1) based on the winner
+        to_fit = self.generate_to_fit_vector(game_data, game_winner_colour).ravel()
+        
+        # Convert to tensors
+        game_boards_tensor = torch.tensor(board_states, dtype=torch.float32)
         to_fit_tensor = torch.tensor(to_fit, dtype=torch.float32).view(-1, 1)
 
+        # Train neural network
         self.optimizer.zero_grad()
-        outputs = self.neural_network(game_boards_tensor)
-        loss = self.criterion(outputs, to_fit_tensor)
+        outputs = self.neural_network(game_boards_tensor)  # NN predictions
+        loss = self.criterion(outputs, to_fit_tensor)  # Compute loss
         loss.backward()
+        print("Before update:", self.neural_network.network[0].weight.data[0][:5])
         self.optimizer.step()
+        print("After update:", self.neural_network.network[0].weight.data[0][:5])
+        print(f"Pre-train Loss: {loss.item()}")
 
 
-    def generate_to_fit_vector(self, game_boards, game_winner_colour):
-        game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
-        with torch.no_grad():
-            initial_probability_array = self.neural_network(game_boards_tensor).numpy()
 
-        computed_probability_array = [0] * len(initial_probability_array)
-        sum_distance = 0
-        next_value = game_winner_colour
+    # def generate_to_fit_vector(self, game_boards, game_winner_colour):
+    #     game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
+    #     with torch.no_grad():
+    #         initial_probability_array = self.neural_network(game_boards_tensor).numpy()
 
-        for i in range(len(initial_probability_array)-1, -1, -1):
-            current_value = initial_probability_array[i]
-            sum_distance += (next_value - current_value)
-            computed_probability_array[i] = current_value + 0.05 * sum_distance
-            sum_distance *= self.lambda_value
-            next_value = initial_probability_array[i]
+    #     computed_probability_array = [0] * len(initial_probability_array)
+    #     sum_distance = 0
+    #     next_value = game_winner_colour
 
-        return np.array(computed_probability_array)
+    #     for i in range(len(initial_probability_array)-1, -1, -1):
+    #         current_value = initial_probability_array[i]
+    #         sum_distance += (next_value - current_value)
+    #         computed_probability_array[i] = current_value + 0.05 * sum_distance
+    #         sum_distance *= self.lambda_value
+    #         next_value = initial_probability_array[i]
+
+    #     return np.array(computed_probability_array)
+    
+    def generate_to_fit_vector(self, game_data, game_winner_colour):
+        # Initialize the computed probability array
+        win_lose_vector = np.zeros(len(game_data))
+
+        # Assign 1 if the board belongs to the winner, otherwise 0
+        for i in range(len(game_data)):
+            color = game_data[i]['color']  # Get the color from the game_data entry
+            win_lose_vector[i] = 1 if color == game_winner_colour else 0
+
+        return np.array(win_lose_vector)
+
 
     def black_white_scoring(self):
         test_board = Board()
