@@ -139,6 +139,7 @@ class MoveRandomTraining(Strategy):
         return "Training stage 1"
 
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
+
         for die_roll in dice_roll:
             valid_pieces = board.get_pieces(colour)
             shuffle(valid_pieces)
@@ -166,8 +167,8 @@ class MoveRandomTraining(Strategy):
                       float(board_stats['sum_single_distance_away_from_home']) / 6 - \
                       board_stats['number_occupied_spaces'] - board_stats['opponents_taken_pieces'] + \
                       3 * board_stats['pieces_on_board'] + float(board_stats['sum_distances_to_endzone']) / 6
-
-        return board_value
+        normalize_value = board_value / 310
+        return normalize_value
     
     
     def assess_board(self, colour, myboard):
@@ -206,16 +207,22 @@ class MoveRandomTraining(Strategy):
             'sum_distances_to_endzone': sum_distances_to_endzone,
         }
     
-    def convert_board_to_vector(self, board): # Convert board into a normalize vector
+    def convert_board_to_vector(self, board): 
+        # Convert board into a normalized vector
         board_vector = [0] * 28
-        for location in range(1, 25):
+        for location in range(1, 25):  # Locations 1 to 24
             pieces = board.pieces_at(location)
             if len(pieces) > 0:
-                board_vector[location - 1] = (len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)) / 15 
-        board_vector[24] = (len(board.pieces_at(0))) / 15  # White pieces blown 
-        board_vector[25] = (len(board.pieces_at(25))) / 15  # Black pieces blown MIGHT NEED minus BEFORE THE len
+                board_vector[location] = (len(pieces) if pieces[0].colour == Colour.WHITE else -len(pieces)) / 15
+        
+        # Blown pieces
+        board_vector[0] = (len(board.pieces_at(0))) / 15  # White pieces blown
+        board_vector[25] = -(len(board.pieces_at(25))) / 15  # Black pieces blown
+    
+        # Eaten pieces
         board_vector[26] = (len(board.get_taken_pieces(Colour.WHITE))) / 15  # White pieces eaten
-        board_vector[27] = (len(board.get_taken_pieces(Colour.BLACK))) / 15  # Black pieces eaten MIGHT NEED minus BEFORE THE len
+        board_vector[27] = -(len(board.get_taken_pieces(Colour.BLACK))) / 15  # Black pieces eaten
+    
         return board_vector
 
 

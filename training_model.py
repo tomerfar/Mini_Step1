@@ -12,7 +12,7 @@ def main():
     # Create an instance of the Training class
     training_instance = Training()
     # for _ in range (10):
-    #     training_instance.initialize_neural_network()
+    #training_instance.initialize_neural_network()
 
     # Train the neural network
     # print("Starting training...")

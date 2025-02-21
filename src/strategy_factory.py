@@ -1,8 +1,9 @@
 from src.compare_all_moves_strategy import CompareAllMovesSimple
-from src.strategies import MoveFurthestBackStrategy, HumanStrategy, MoveRandomPiece
+from src.strategies import MoveFurthestBackStrategy, HumanStrategy, MoveRandomPiece, MoveRandomTraining
 from src.MiniMaxi import MiniMax
 from src.MSTC import MonteCarloTreeSearchNode
 from src.MLplayer import MLPlayer
+
 
 
 class StrategyFactory:
@@ -26,6 +27,7 @@ class StrategyFactory:
             HumanStrategy,
             MiniMax,
             MonteCarloTreeSearchNode,
-            MLPlayer
+            MLPlayer,
+            MoveRandomTraining
         ]
         return strategies

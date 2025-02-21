@@ -25,9 +25,9 @@ class NeuralNetwork(nn.Module):
 class Brain:
     def __init__(self):
         self.neural_network = NeuralNetwork(input_size=28)
-        self.optimizer = optim.Adam(self.neural_network.parameters(), lr=0.01) # lr might be changed
+        self.optimizer = optim.Adam(self.neural_network.parameters(), lr=0.001) # lr might be changed
         self.criterion = nn.MSELoss()
-        self.games_played = 0
+        self.games_played = 0 # need to increment it whenever we finish a game
         self.name = None
         self.lambda_value = 0.7
 
@@ -52,8 +52,8 @@ class Brain:
         # Extract board states and heuristic values from game_data
         board_states = [data['board'] for data in game_data]
         heuristic_values = [data['heuristic'] for data in game_data]
-        print(f"boards:{board_states}")
-        print(f"values:{heuristic_values}")
+        # print(f"boards:{board_states}")
+        # print(f"values:{heuristic_values}")
 
         # Convert board states and heuristic values to tensors
         board_states_tensor = torch.tensor(board_states, dtype=torch.float32)
@@ -72,7 +72,11 @@ class Brain:
         loss.backward()
 
         # Perform a single optimization step (parameter update)
-        self.optimizer.step()
+        print("Before update:", self.neural_network.network[0].weight.data[0][:5])  
+        self.optimizer.step()  
+        print("After update:", self.neural_network.network[0].weight.data[0][:5])
+
+        print(f"Pre-train Loss: {loss.item()}")
     
 
     def train_brain(self, game_boards, game_winner_colour):

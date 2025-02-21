@@ -20,19 +20,19 @@ class Training:
             self.brain = self.brain.load_saved_brain(brain)
 
     def initialize_neural_network(self):
+        for i in range(5):  # Run 5 iterations
+            game = Game(
+                white_strategy=MoveRandomTraining(),
+                black_strategy=MoveRandomTraining(),
+                first_player=Colour(randint(0, 1)),
+                time_limit=-1
+            )
+            print(f"Running pre-train iteration {i+1}")
+            game.run_game(verbose=False)
 
-        game = Game(
-        white_strategy=MoveRandomTraining(),
-        black_strategy=MoveRandomTraining(),
-        first_player=Colour(randint(0, 1)),
-        time_limit=-1
-        )
-        print("reached run game")
-        game.run_game(verbose=False)
-        # Train the neural network initially on the starting board
-
-        self.brain.pre_train_brain(game.strategies[Colour.WHITE].game_data)
-        self.brain.save_brain()
+            # Train the neural network initially on the starting board
+            self.brain.pre_train_brain(game.strategies[Colour.WHITE].game_data)
+            self.brain.save_brain(self.brain.name) # Overrides current save, changing Neural Network
         
 
     def train(self, iterations, names):
