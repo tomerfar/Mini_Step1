@@ -163,7 +163,7 @@ class Brain:
         # Initialize the computed probability array
         win_lose_vector = np.zeros(len(game_data))
         last_board = self.game_data[-1]["board"]
-        remaining_pieces = len(last_board.get_pieces(game_winner_colour.other))
+        remaining_pieces = len(last_board.get_pieces(game_winner_colour.other()))
         if (remaining_pieces == 15):
             gain = 1
         elif (remaining_pieces > 3):
