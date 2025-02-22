@@ -28,21 +28,22 @@ class MLPlayer(Strategy):
         """
         possible_moves = self.generate_boards(board, colour, dice_roll)
         optimal_move = [] # List that will hold tuples with 2 values : ((list of moves), move_value)
+        if len(possible_moves) > 0:
 
-        for gen_board, move in possible_moves.items():
-            try:
-                board_vector = self.convert_board_to_vector(board=gen_board) # returns a vector representation of the board
-                board_state_tensor = torch.tensor(board_vector, dtype=torch.float32).unsqueeze(0)
-                move_value = self.brain.neural_network(board_state_tensor).item()  # Get the evaluation score from the network
-                optimal_move.append((move, move_value))
-            except MoveNotPossibleException:
-                continue
+            for gen_board, move in possible_moves.items():
+                try:
+                    board_vector = self.convert_board_to_vector(board=gen_board) # returns a vector representation of the board
+                    board_state_tensor = torch.tensor(board_vector, dtype=torch.float32).unsqueeze(0)
+                    move_value = self.brain.neural_network(board_state_tensor).item()  # Get the evaluation score from the network
+                    optimal_move.append((move, move_value))
+                except MoveNotPossibleException:
+                    continue
 
-        # Choose max/min value from the 2nd element in the tuple: x[1], extract the 1st value (the moves) :[0] 
-        best_move = (max if colour == Colour.WHITE else min)(optimal_move, key=lambda x: x[1])[0]
+            # Choose max/min value from the 2nd element in the tuple: x[1], extract the 1st value (the moves) :[0] 
+            best_move = (max if colour == Colour.WHITE else min)(optimal_move, key=lambda x: x[1])[0]
 
-        for move in best_move:
-            make_move(move['piece_at'], move['die_roll'])
+            for move in best_move:
+                make_move(move['piece_at'], move['die_roll'])
 
 
     def generate_boards(self, board, colour, dice_rolls):

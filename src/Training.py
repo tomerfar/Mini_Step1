@@ -7,7 +7,7 @@ from src.colour import Colour
 from random import randint
 
 class Training:
-    def __init__(self, brain):
+    def __init__(self, brain=None):
         self.brain = Brain()
         self.game_turns = []
         self.start_board_estimation = []

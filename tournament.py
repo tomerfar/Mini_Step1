@@ -85,6 +85,7 @@ def run_tournament(player_names, player_strategies):
         tournament_branch.append(round_matchups)
         players = next_round_players
     final_winner = list(players.keys())[0]
+    print(f"{final_winner} won with {wins[final_winner]} wins out of {game_number} games in the best of {best_of} series!")
     print(f"{final_winner} is the tournament champion!")
     print("\nTournament Results:")
     for result in game_results:

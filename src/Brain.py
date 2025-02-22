@@ -1,6 +1,7 @@
 import os
 import pickle
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -74,7 +75,26 @@ class Brain:
         # Compute the loss
         loss = self.criterion(outputs, heuristic_values_tensor)
 
-        # Backward pass: compute gradient of the loss with respect to model parameters
+         # Compute differences
+        differences = heuristic_values_tensor - outputs
+        expected_value = differences.mean().item()
+        variance = differences.var().item()
+
+        # Prepare DataFrame
+        df = pd.DataFrame({
+            'Heuristic Value': heuristic_values,
+            'NN Output': outputs.detach().numpy().flatten(),
+            'Difference': differences.detach().numpy().flatten()
+        })
+
+        # Add statistics
+        df.loc['Mean'] = [None, None, expected_value]
+        df.loc['Variance'] = [None, None, variance]
+
+        # Save to Excel
+        df.to_excel("heuristic_analysis2.xlsx", index=False)
+
+            # Backward pass: compute gradient of the loss with respect to model parameters
         loss.backward()
 
         # Perform a single optimization step (parameter update)
@@ -83,7 +103,9 @@ class Brain:
         print("After update:", self.neural_network.network[0].weight.data[0][:5])
 
         print(f"Pre-train Loss: {loss.item()}")
-    
+        print(f"Expected Value of Difference: {expected_value}")
+        print(f"Variance of Difference: {variance}")
+        
 
     # def train_brain(self, game_boards, game_winner_colour):
     #     to_fit = self.generate_to_fit_vector(game_boards, game_winner_colour).ravel()
@@ -140,11 +162,19 @@ class Brain:
     def generate_to_fit_vector(self, game_data, game_winner_colour):
         # Initialize the computed probability array
         win_lose_vector = np.zeros(len(game_data))
+        last_board = self.game_data[-1]["board"]
+        remaining_pieces = len(last_board.get_pieces(game_winner_colour.other))
+        if (remaining_pieces == 15):
+            gain = 1
+        elif (remaining_pieces > 3):
+            gain = 0.9
+        else:
+            gain = 0.6
 
         # Assign 1 if the board belongs to the winner, otherwise 0
         for i in range(len(game_data)):
             color = game_data[i]['color']  # Get the color from the game_data entry
-            win_lose_vector[i] = 1 if color == game_winner_colour else 0
+            win_lose_vector[i] = gain if color == game_winner_colour else 0
 
         return np.array(win_lose_vector)
 
