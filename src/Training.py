@@ -27,6 +27,7 @@ class Training:
                 first_player=Colour(randint(0, 1)),
                 time_limit=-1
             )
+            #hello
             print(f"Running pre-train iteration {i+1}")
             game.run_game(verbose=False)
 
