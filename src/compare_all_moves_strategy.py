@@ -4,6 +4,11 @@ from src.piece import Piece
 
 class CompareAllMoves(Strategy):
 
+    def __init__(self, values_or_colours):
+        # if values_or_colors == True - store boards and colors, otherwise - store boards and heuristics
+        self.values = values_or_colours
+        self.game_data = []  # List of lists [{color: [board, value]}]
+
     @staticmethod
     def get_difficulty():
         return "Hard"
@@ -45,6 +50,13 @@ class CompareAllMoves(Strategy):
         }
 
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
+        if self.values: # True - board|color
+            opponent_board = self.convert_board_to_vector(board.create_copy())
+            self.game_data.append({
+            "board": opponent_board,
+            "color": colour.other(),
+            })
+
 
         result = self.move_recursively(board, colour, dice_roll)
         not_a_double = len(dice_roll) == 2
@@ -58,8 +70,31 @@ class CompareAllMoves(Strategy):
                 result = result_swapped
 
         if len(result['best_moves']) != 0:
+            # Create a copy of the board before making the move
+            board_copy_before_move = board.create_copy()
+            for move in result['best_moves']:
+                new_piece = board_copy_before_move.get_piece_at(move['piece_at'])
+                board_copy_before_move.move_piece(new_piece, move['die_roll'])
+            board_copy_before_move = self.convert_board_to_vector(board=board_copy_before_move)
+            
+            if self.values: # True - board|color
+                self.game_data.append({
+                "board": board_copy_before_move,
+                "color": colour
+            })
+            else: # False - board|heuristic
+            # Save the board state after the move in game_data
+                self.game_data.append({
+                    "board": board_copy_before_move,
+                    "heuristic": result['best_value']
+                })
+            
+            #Perform the actual move
             for move in result['best_moves']:
                 make_move(move['piece_at'], move['die_roll'])
+
+
+                
 
     def move_recursively(self, board, colour, dice_rolls):
         best_board_value = float('inf')
@@ -100,7 +135,7 @@ class CompareAllMoves(Strategy):
                     if board_value < best_board_value and len(best_pieces_to_move) < 2:
                         best_board_value = board_value
                         best_pieces_to_move = [{'die_roll': die_roll, 'piece_at': piece.location}]
-
+        
         return {'best_value': best_board_value,
                 'best_moves': best_pieces_to_move}
     

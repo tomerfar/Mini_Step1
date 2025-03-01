@@ -41,6 +41,8 @@ class MLPlayer(Strategy):
 
             # Choose max/min value from the 2nd element in the tuple: x[1], extract the 1st value (the moves) :[0] 
             best_move = (max if colour == Colour.WHITE else min)(optimal_move, key=lambda x: x[1])[0]
+            #best_move = (max)(optimal_move, key=lambda x: x[1])[0]
+            
 
             for move in best_move:
                 make_move(move['piece_at'], move['die_roll'])

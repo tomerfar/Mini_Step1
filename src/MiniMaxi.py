@@ -12,7 +12,7 @@ from itertools import permutations
 class MiniMax(Strategy):
 
 
-    def __init__(self, depth=1, time_limit = -1):
+    def __init__(self, depth=0, time_limit = -1):
         super().__init__()
         self.MAX_DEPTH = depth
         self.time_limit = time_limit # Time limit in seconds
@@ -67,7 +67,8 @@ class MiniMax(Strategy):
         #print("It is AI turn, his colour is %s, your roll is %s" % (colour, dice_rolls))
         possible_boards_with_moves = self.generate_boards(board, colour, dice_rolls) # List of all possible boards for the player with the current dice rolls
         if len(possible_boards_with_moves) == 0:
-            print("Didn't generate any boards.\n")
+            print("")
+            #print("Didn't generate any boards.\n")
 
         
         for b, moves in possible_boards_with_moves.items(): # Iterating through the dict key&value

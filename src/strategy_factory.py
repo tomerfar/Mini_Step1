@@ -12,9 +12,12 @@ class StrategyFactory:
         for strategy in StrategyFactory.get_all():
             if strategy.__name__ == strategy_name:
                 if strategy_name == "MonteCarloTreeSearchNode":
-                    return MonteCarloTreeSearchNode(state=None, colour=None,dice_rolls=None)
+                    return MonteCarloTreeSearchNode(state=None, colour=None, dice_rolls=None)
                 
-                return strategy()
+                if strategy_name == "CompareAllMovesSimple":
+                    return CompareAllMovesSimple(values_or_colours=True)  # Pass required argument
+                
+                return strategy()  # Default case
 
         raise Exception("Cannot find strategy %s" % strategy_name)
 

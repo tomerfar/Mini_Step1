@@ -2,6 +2,7 @@ import torch
 from src.game import Game
 from src.Brain import Brain
 from src.strategies import MoveRandomTraining, TrainingPhase2
+from src.compare_all_moves_strategy import CompareAllMoves
 from src.MLplayer import MLPlayer
 from src.colour import Colour
 from random import randint
@@ -13,6 +14,8 @@ class Training:
         self.start_board_estimation = []
         self.white_20_estimation = []
         self.black_100_estimation = []
+        
+        self.aggregated_game_data = []
 
         if brain is None:
             self.initialize_neural_network()
@@ -20,24 +23,25 @@ class Training:
             self.brain = self.brain.load_saved_brain(brain)
 
     def initialize_neural_network(self):
-        for i in range(1000):  # Run 5 iterations
+        for i in range(500):  # Run 5 iterations
             game = Game(
-                white_strategy=MoveRandomTraining(),
-                black_strategy=MoveRandomTraining(),
+                white_strategy=CompareAllMoves(values_or_colours=False), # We Change this, it was RandomPlayer Training
+                black_strategy=CompareAllMoves(values_or_colours=False),
                 first_player=Colour(randint(0, 1)),
                 time_limit=-1
             )
             #hello
             print(f"Running pre-train iteration {i+1}")
             game.run_game(verbose=False)
-
+            self.aggregated_game_data.extend(game.strategies[Colour.WHITE].game_data)
             # Train the neural network initially on the starting board
-            self.brain.pre_train_brain(game.strategies[Colour.WHITE].game_data)
+            self.brain.pre_train_brain(self.aggregated_game_data)
+            self.aggregated_game_data = [] # Clear the list after training is completed
             #self.brain.save_brain(self.brain.name) # Overrides current save, changing Neural Network
-            if (i + 1001) % 100 == 0:
-                brain_name = f"brain_iteration_{i+1001}"
+            if (i + 1) % 100 == 0:
+                brain_name = f"compareBrain_iteration_{i+1}"
                 self.brain.save_brain(brain_name)  # Saves with a unique name
-                print(f"Saved brain at iteration {i+1001}")
+                print(f"Saved brain at iteration {i+1}")
         
 
     def train(self, iterations, names):
@@ -46,8 +50,8 @@ class Training:
         for i in range(iterations[-1]):
             # Create a new game instance for each training iteration
             game = Game(
-            white_strategy=TrainingPhase2(),
-            black_strategy=TrainingPhase2(),
+            white_strategy=CompareAllMoves(values_or_colours=True),
+            black_strategy=CompareAllMoves(values_or_colours=True),
             first_player=Colour(randint(0, 1)),
             time_limit=-1
             )

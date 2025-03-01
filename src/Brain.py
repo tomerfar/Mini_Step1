@@ -87,12 +87,12 @@ class Brain:
             'Difference': differences.detach().numpy().flatten()
         })
 
-        # Add statistics
-        df.loc['Mean'] = [None, None, expected_value]
-        df.loc['Variance'] = [None, None, variance]
+         # Add statistics
+        df['Mean'] = [expected_value] * len(df)
+        df['Variance'] = [variance] * len(df)
 
         # Save to Excel
-        df.to_excel("heuristic_analysis2.xlsx", index=False)
+        df.to_excel("heuristic_network_dif.xlsx", index=False)
 
             # Backward pass: compute gradient of the loss with respect to model parameters
         loss.backward()
@@ -162,12 +162,12 @@ class Brain:
     def generate_to_fit_vector(self, game_data, game_winner_colour):
         # Initialize the computed probability array
         win_lose_vector = np.zeros(len(game_data))
-        last_board = self.game_data[-1]["board"]
-        remaining_pieces = len(last_board.get_pieces(game_winner_colour.other()))
+        last_board = game_data[-1]["board"]
+        remaining_pieces = sum(abs(round(piece * 15)) for piece in last_board)
         if (remaining_pieces == 15):
-            gain = 1
+            gain = 1.5
         elif (remaining_pieces > 3):
-            gain = 0.9
+            gain = 1
         else:
             gain = 0.6
 

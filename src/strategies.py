@@ -249,9 +249,11 @@ class MoveRandomTraining(Strategy):
     def __init__(self):
         self.game_data = []  # List to store board states and heuristic values
 
+
     @staticmethod
     def get_difficulty():
         return "Training stage 1"
+    
 
     def move(self, board, colour, dice_roll, make_move, opponents_activity):
 

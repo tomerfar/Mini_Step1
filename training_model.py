@@ -10,10 +10,10 @@ def main():
     total_iterations = 1000
     save_interval = 100  # Save every 100 iterations
     save_checkpoints = list(range(save_interval, total_iterations + 1, save_interval))
-    save_names = [f"brain_checkpoint_{i}" for i in save_checkpoints]
+    save_names = [f"brain_iteration{i+2001}" for i in save_checkpoints]
 
     # Initialize Training instance with the brain
-    training_instance = Training("brain_20")
+    training_instance = Training("brain_iteration_2000")
 
     print(f"Starting training for {total_iterations} iterations...")
 
