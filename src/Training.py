@@ -7,7 +7,7 @@ from src.colour import Colour
 from random import randint
 
 class Training:
-    def __init__(self, brain=None):
+    def __init__(self, brain):
         self.brain = Brain()
         self.game_turns = []
         self.start_board_estimation = []
@@ -20,7 +20,7 @@ class Training:
             self.brain = self.brain.load_saved_brain(brain)
 
     def initialize_neural_network(self):
-        for i in range(5):  # Run 5 iterations
+        for i in range(1000):  # Run 5 iterations
             game = Game(
                 white_strategy=MoveRandomTraining(),
                 black_strategy=MoveRandomTraining(),
@@ -33,7 +33,11 @@ class Training:
 
             # Train the neural network initially on the starting board
             self.brain.pre_train_brain(game.strategies[Colour.WHITE].game_data)
-            self.brain.save_brain(self.brain.name) # Overrides current save, changing Neural Network
+            #self.brain.save_brain(self.brain.name) # Overrides current save, changing Neural Network
+            if (i + 1001) % 100 == 0:
+                brain_name = f"brain_iteration_{i+1001}"
+                self.brain.save_brain(brain_name)  # Saves with a unique name
+                print(f"Saved brain at iteration {i+1001}")
         
 
     def train(self, iterations, names):
