@@ -23,10 +23,10 @@ class Training:
             self.brain = self.brain.load_saved_brain(brain)
 
     def initialize_neural_network(self):
-        for i in range(500):  # Run 5 iterations
+        for i in range(1000):  # Run 1000 iterations
             game = Game(
-                white_strategy=CompareAllMoves(values_or_colours=False), # We Change this, it was RandomPlayer Training
-                black_strategy=CompareAllMoves(values_or_colours=False),
+                white_strategy=MoveRandomTraining(), # We Change this, it was RandomPlayer Training
+                black_strategy=MoveRandomTraining(),
                 first_player=Colour(randint(0, 1)),
                 time_limit=-1
             )
@@ -50,8 +50,8 @@ class Training:
         for i in range(iterations[-1]):
             # Create a new game instance for each training iteration
             game = Game(
-            white_strategy=CompareAllMoves(values_or_colours=True),
-            black_strategy=CompareAllMoves(values_or_colours=True),
+            white_strategy=TrainingPhase2(),
+            black_strategy=TrainingPhase2(),
             first_player=Colour(randint(0, 1)),
             time_limit=-1
             )
