@@ -4,16 +4,15 @@ from src.game import Game
 from src.strategy_factory import StrategyFactory
 from src.strategies import HumanStrategy
 
-
- # Script for running and training the neural network
+# Script for running and training the neural network
 def main():
-    total_iterations = 1000
-    save_interval = 100  # Save every 100 iterations
+    total_iterations = 10000
+    save_interval = 1000  # Save every 1000 iterations
     save_checkpoints = list(range(save_interval, total_iterations + 1, save_interval))
-    save_names = [f"brain_iteration{i+2001}" for i in save_checkpoints]
+    save_names = [f"checkpoint1000{i}" for i in save_checkpoints]
 
     # Initialize Training instance with the brain
-    training_instance = Training("brain_iteration_2000")
+    training_instance = Training("brain_checkpoint_1000.pt")
 
     print(f"Starting training for {total_iterations} iterations...")
 
@@ -22,20 +21,7 @@ def main():
 
     # Save final trained model
     print("Training complete. Saving final model...")
-    training_instance.brain.save_brain("brain_final.pt")
-
-
-    # # Define the number of training iterations and checkpoints
-    # iteration_checkpoints = [1000]  # Save the model at these iteration milestones
-    # brain_save_names = ["brain_30"]  # File names for saved models
-
-    # # Create an instance of the Training class
-    # #training_instance = Training()
-    # training_instance = Training("brain_20")
-    # # Train the neural network
-    # print("Starting training...")
-    # training_instance.train(iterations=iteration_checkpoints, names=brain_save_names)
-    # print("Training complete.")
+    training_instance.brain.save_brain("master_brain10000")
 
 if __name__ == "__main__":
     main()

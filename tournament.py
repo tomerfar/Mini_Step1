@@ -9,9 +9,11 @@ def print_tournament_placement(player_names):
     print("Tournament Placement:")
     for i in range(0, len(player_names), 2):
         if i + 1 < len(player_names):
-            print(f"{player_names[i]} vs {player_names[i + 1]}")
+            print("")
+            #print(f"{player_names[i]} vs {player_names[i + 1]}")
         else:
-            print(f"{player_names[i]} gets a bye")
+            print("")
+            #print(f"{player_names[i]} gets a bye")
 
 def print_tournament_branch(tournament_branch):
     print("\nTournament Branch:")
