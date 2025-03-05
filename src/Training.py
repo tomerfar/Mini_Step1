@@ -11,9 +11,6 @@ class Training:
     def __init__(self, brain):
         self.brain = Brain()
         self.game_turns = []
-        self.start_board_estimation = []
-        self.white_20_estimation = []
-        self.black_100_estimation = []
         
         self.aggregated_game_data = []
 
@@ -21,6 +18,7 @@ class Training:
             self.initialize_neural_network()
         else:
             self.brain = self.brain.load_saved_brain(brain)
+            
 
     def initialize_neural_network(self):
         for i in range(1000):  # Run 1000 iterations
@@ -64,10 +62,3 @@ class Training:
             if i >= iterations[name_index] - 1:
                 self.brain.save_brain(names[name_index])  # Save brain after a specified number of iterations
                 name_index += 1
-
-            # Estimation for the starting board and black/white scoring
-            # start_board_estimation = self.brain.neural_network(torch.tensor([game.game_boards[0]], dtype=torch.float32)).item()
-            # black, white = self.brain.black_white_scoring()
-            # self.start_board_estimation.append(start_board_estimation)
-            # self.white_20_estimation.append(white)
-            # self.black_100_estimation.append(black)

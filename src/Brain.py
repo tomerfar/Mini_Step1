@@ -52,8 +52,6 @@ class Brain:
         # Extract board states and heuristic values from game_data
         board_states = [data['board'] for data in game_data]
         heuristic_values = [data['heuristic'] for data in game_data]
-        # print(f"boards:{board_states}")
-        # print(f"values:{heuristic_values}")
 
         # Convert board states and heuristic values to tensors
         board_states_tensor = torch.tensor(board_states, dtype=torch.float32)
@@ -141,32 +139,3 @@ class Brain:
 
         return np.array(win_lose_vector)
 
-
-
-
-    # def black_white_scoring(self):
-    #     test_board = Board()
-    #     test_board.board = [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0],
-    #                         [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 0]]
-    #     with torch.no_grad():
-    #         return self.neural_network(torch.tensor([test_board.board_to_vector(0)], dtype=torch.float32)).numpy(), \
-    #                self.neural_network(torch.tensor([test_board.board_to_vector(1)], dtype=torch.float32)).numpy()
-
-
-    # def generate_to_fit_vector(self, game_boards, game_winner_colour):
-    #     game_boards_tensor = torch.tensor(game_boards, dtype=torch.float32)
-    #     with torch.no_grad():
-    #         initial_probability_array = self.neural_network(game_boards_tensor).numpy()
-
-    #     computed_probability_array = [0] * len(initial_probability_array)
-    #     sum_distance = 0
-    #     next_value = game_winner_colour
-
-    #     for i in range(len(initial_probability_array)-1, -1, -1):
-    #         current_value = initial_probability_array[i]
-    #         sum_distance += (next_value - current_value)
-    #         computed_probability_array[i] = current_value + 0.05 * sum_distance
-    #         sum_distance *= self.lambda_value
-    #         next_value = initial_probability_array[i]
-
-    #     return np.array(computed_probability_array)
