@@ -8,14 +8,14 @@ import torch.optim as optim
 from src.board import Board
 
 class NeuralNetwork(nn.Module):
-    def __init__(self, input_size):
+    def __init__(self, input_size, size1, size2):
         super(NeuralNetwork, self).__init__()
         self.network = nn.Sequential(
-            nn.Linear(input_size, 128),
+            nn.Linear(input_size, size1),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(size1, size2),
             nn.ReLU(),
-            nn.Linear(64, 1)  # Output a single value
+            nn.Linear(size2, 1)  # Output a single value
         )
 
 
@@ -24,8 +24,8 @@ class NeuralNetwork(nn.Module):
     
 
 class Brain:
-    def __init__(self):
-        self.neural_network = NeuralNetwork(input_size=28)
+    def __init__(self, size1, size2):
+        self.neural_network = NeuralNetwork(input_size=28, size1=size1, size2=size2)
         self.optimizer = optim.Adam(self.neural_network.parameters(), lr=0.001) # lr might be changed
         self.criterion = nn.MSELoss()
         self.games_played = 0 # need to increment it whenever we finish a game
@@ -42,9 +42,9 @@ class Brain:
 
     
     @staticmethod
-    def load_saved_brain(file_name):
+    def load_saved_brain(file_name, size1, size2):
         path = os.path.join(os.getcwd(), f"{file_name}.pt")
-        brain_instance = Brain()  # Initialize an empty Brain instance
+        brain_instance = Brain(size1, size2)  # Initialize an empty Brain instance
         brain_instance.neural_network.load_state_dict(torch.load(path, weights_only=True))
         return brain_instance  # Return the fully constructed Brain object
     
