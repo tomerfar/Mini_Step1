@@ -8,10 +8,12 @@ from itertools import permutations
 
 class MLPlayer(Strategy):
     def __init__(self, brain_file=None):
-        self.brain = Brain()
+        size1 = int(input("please enter layer1 number:"))
+        size2 = int(input("plaese enter layer2 number:"))
+        self.brain = Brain(size1, size2)
         brain_file = input("Please enter the filename for the brain model: ")
         if brain_file:
-            self.brain.load_saved_brain(brain_file)
+            self.brain.load_saved_brain(brain_file, size1, size2)
         else:
             self.brain = NeuralNetwork(input_size=28)  # Assuming 28 is the input size
         self.game_history = []  # Store game history for training
